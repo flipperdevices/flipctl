@@ -1,0 +1,32 @@
+{
+  "apiVersion": "viewdoc.flipctl.dev/v1alpha1",
+  "sessionId": "fixture",
+  "viewId": "nmap-running",
+  "revision": 2,
+  "title": "Nmap Running",
+  "blocks": [
+    {
+      "id": "status",
+      "kind": "progress",
+      "title": "Connect scan",
+      "progress": {
+        "label": "Connect Scan",
+        "value": 50,
+        "max": 100,
+        "text": "running against target-http"
+      }
+    },
+    {
+      "id": "output",
+      "kind": "log",
+      "title": "Output",
+      "lines": [
+        {
+          "id": "1",
+          "source": "stdout",
+          "text": "Stats: 0:00:01 elapsed; 0 hosts completed"
+        }
+      ]
+    }
+  ]
+}

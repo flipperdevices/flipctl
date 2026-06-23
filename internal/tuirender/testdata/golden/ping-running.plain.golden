@@ -1,0 +1,10 @@
+FlipCTL Ping Running
+view=ping-running revision=2 session=fixture
+Actions: Cancel[job.cancel]
+
+progress status — Progress
+Ping 50.0%: 2 of 4 replies received
+
+log output — Output
+[1] stdout 64 bytes from 93.184.216.34: sequence=1 ttl=56 time=12.3 ms
+[2] stdout 64 bytes from 93.184.216.34: sequence=2 ttl=56 time=12.5 ms

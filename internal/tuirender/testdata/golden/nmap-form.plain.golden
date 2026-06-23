@@ -1,0 +1,7 @@
+FlipCTL Nmap
+view=nmap-form revision=1 session=fixture
+Actions: Start nmap[job.start]
+
+form form — Start Nmap
+• Target (text required): target-http
+• Ports (text required): 80,443 — bounded-port-list

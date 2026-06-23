@@ -1,0 +1,22 @@
+{
+  "apiVersion": "viewdoc.flipctl.dev/v1alpha1",
+  "sessionId": "fixture",
+  "viewId": "invalid-action",
+  "revision": 1,
+  "title": "Invalid action",
+  "blocks": [
+    {
+      "id": "intro",
+      "kind": "text",
+      "text": "x"
+    }
+  ],
+  "actions": [
+    {
+      "id": "job.start",
+      "label": "Start",
+      "enabled": true,
+      "disabled": false
+    }
+  ]
+}

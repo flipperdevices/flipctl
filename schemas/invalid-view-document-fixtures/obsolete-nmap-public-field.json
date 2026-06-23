@@ -1,0 +1,15 @@
+{
+  "apiVersion": "viewdoc.flipctl.dev/v1alpha1",
+  "sessionId": "s-test",
+  "viewId": "invalid",
+  "revision": 1,
+  "title": "Invalid",
+  "blocks": [
+    {
+      "id": "b",
+      "kind": "text",
+      "text": "hello",
+      "nmapPortStates": []
+    }
+  ]
+}

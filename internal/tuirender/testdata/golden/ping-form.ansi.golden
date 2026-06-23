@@ -1,0 +1,7 @@
+[1;36mFlipCTL[0m Ping
+[2mview=ping-form revision=1 session=fixture[0m
+Actions: Start ping[job.start]
+
+[1mform form — Start Ping[0m
+• Target (text required): example.com — hostname-or-ip
+• Count (number required): 4

@@ -1,0 +1,16 @@
+{
+  "apiVersion": "viewdoc.flipctl.dev/v1alpha1",
+  "sessionId": "fixture",
+  "viewId": "nmap-failure",
+  "revision": 2,
+  "title": "Nmap Failure",
+  "blocks": [
+    {
+      "id": "notice",
+      "kind": "notice",
+      "severity": "error",
+      "title": "Nmap rejected",
+      "text": "target must be an allowed internal service"
+    }
+  ]
+}

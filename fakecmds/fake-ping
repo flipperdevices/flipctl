@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+count=3
+if [ "$1" = "-c" ]; then count="$2"; shift 2; fi
+target="$1"
+if [ "$FLIPCTL_FAKE_SLOW" = "1" ] || [ "$target" = "slow.test" ]; then sleep 5; fi
+echo "PING $target ($target): 56 data bytes"
+echo "64 bytes from $target: icmp_seq=0 ttl=64 time=0.1 ms"
+echo "--- $target ping statistics ---"
+echo "$count packets transmitted, $count packets received, 0% packet loss"

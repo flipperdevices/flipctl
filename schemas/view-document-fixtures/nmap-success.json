@@ -1,0 +1,50 @@
+{
+  "apiVersion": "viewdoc.flipctl.dev/v1alpha1",
+  "sessionId": "fixture",
+  "viewId": "nmap-success",
+  "revision": 3,
+  "title": "Nmap Success",
+  "blocks": [
+    {
+      "id": "ports",
+      "kind": "table",
+      "title": "Port states",
+      "columns": [
+        {
+          "id": "host",
+          "label": "Host"
+        },
+        {
+          "id": "port",
+          "label": "Port"
+        },
+        {
+          "id": "service",
+          "label": "Service"
+        },
+        {
+          "id": "state",
+          "label": "State"
+        }
+      ],
+      "rows": [
+        {
+          "cells": {
+            "host": "target-http",
+            "port": "80/tcp",
+            "service": "http",
+            "state": "open"
+          }
+        },
+        {
+          "cells": {
+            "host": "target-http",
+            "port": "443/tcp",
+            "service": "https",
+            "state": "closed"
+          }
+        }
+      ]
+    }
+  ]
+}

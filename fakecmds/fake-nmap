@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+[ "$1" = "-sn" ] && shift
+target="$1"
+echo "Starting Nmap 7.94 ( fake )"
+echo "Nmap scan report for $target"
+echo "Host is up (0.001s latency)."
+echo "Nmap done: 1 IP address (1 host up) scanned in 0.01 seconds"

@@ -1,0 +1,397 @@
+openapi: 3.1.0
+info:
+  title: FlipCTL canonical HTTP API
+  version: v1
+  description: |
+    Canonical FlipCTL session API. The checked-in `api/openapi.yaml` is the
+    source served by `GET /api/v1/openapi.json`. Legacy compatibility endpoints
+    are intentionally omitted from this target contract.
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/v1/sessions:
+    post:
+      operationId: createSession
+      summary: Create a canonical session
+      description: Creates an in-memory session starting at the canonical home ViewDocument.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+            examples:
+              empty:
+                value: {}
+      responses:
+        '200':
+          description: Session created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+              examples:
+                created:
+                  value:
+                    sessionId: s-1
+                    currentAppId: home
+                    formValues: {}
+                    revision: 1
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '500': {$ref: '#/components/responses/InternalError'}
+  /api/v1/sessions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/SessionID'
+    get:
+      operationId: getSession
+      summary: Get session state
+      responses:
+        '200':
+          description: Session state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+              examples:
+                session:
+                  value:
+                    sessionId: s-1
+                    currentAppId: network.ping
+                    formValues:
+                      target: ya.ru
+                    selectedJobId: job-1
+                    revision: 4
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '500': {$ref: '#/components/responses/InternalError'}
+    delete:
+      operationId: deleteSession
+      summary: Delete a session
+      responses:
+        '200':
+          description: Deletion result.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted]
+                additionalProperties: false
+                properties:
+                  deleted:
+                    type: boolean
+              examples:
+                deleted:
+                  value: {deleted: true}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '500': {$ref: '#/components/responses/InternalError'}
+  /api/v1/sessions/{id}/view:
+    parameters:
+      - $ref: '#/components/parameters/SessionID'
+    get:
+      operationId: getSessionView
+      summary: Get the canonical session ViewDocument
+      description: Returns the renderer-neutral ViewDocument for the current session state.
+      responses:
+        '200':
+          description: Canonical ViewDocument.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/view-document.json'
+              examples:
+                home:
+                  value:
+                    apiVersion: viewdoc.flipctl.dev/v1alpha1
+                    sessionId: s-1
+                    viewId: home
+                    revision: 1
+                    title: FlipCTL
+                    blocks:
+                      - id: app-list
+                        kind: list
+                        title: Apps
+                        items:
+                          - label: Ping
+                            description: Send ICMP echo requests
+                            action:
+                              id: app.open
+                              label: Open Ping
+                              enabled: true
+                              role: primary
+                              params: {appId: network.ping}
+                    actions: []
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '500': {$ref: '#/components/responses/InternalError'}
+  /api/v1/sessions/{id}/actions:
+    parameters:
+      - $ref: '#/components/parameters/SessionID'
+    post:
+      operationId: invokeSessionAction
+      summary: Invoke a semantic session action
+      description: Requires the caller's current view identity and revision. Stale requests return 409 and do not mutate state.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionRequest'
+            examples:
+              openApp:
+                value:
+                  actionId: app.open
+                  viewId: home
+                  revision: 1
+                  params: {appId: network.ping}
+              updateForm:
+                value:
+                  actionId: form.update
+                  viewId: ping-form
+                  revision: 2
+                  values: {target: ya.ru, count: '4'}
+              startJob:
+                value:
+                  actionId: job.start
+                  viewId: ping-form
+                  revision: 3
+              cancelJob:
+                value:
+                  actionId: job.cancel
+                  viewId: ping-running
+                  revision: 4
+                  params: {jobId: job-1}
+      responses:
+        '200':
+          description: Updated current ViewDocument for every successful canonical session action.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/view-document.json'
+              examples:
+                openedApp:
+                  value:
+                    apiVersion: viewdoc.flipctl.dev/v1alpha1
+                    sessionId: s-1
+                    viewId: ping-form
+                    revision: 2
+                    title: Ping
+                    blocks:
+                      - id: form
+                        kind: form
+                        title: Start Ping
+                        fields:
+                          - id: target
+                            label: Target
+                            type: text
+                            default: ya.ru
+                            required: true
+                            validation: hostname-or-ip
+                          - id: count
+                            label: Count
+                            type: number
+                            default: '4'
+                            required: true
+                    actions:
+                      - {id: form.update, label: Update form, enabled: true}
+                      - {id: job.start, label: Start ping, enabled: true, role: primary}
+                      - {id: navigation.back, label: Back, enabled: true}
+                startedJob:
+                  value:
+                    apiVersion: viewdoc.flipctl.dev/v1alpha1
+                    sessionId: s-1
+                    viewId: ping-running
+                    revision: 4
+                    title: Job j-1
+                    blocks:
+                      - id: meta
+                        kind: key_value
+                        title: Job
+                        pairs:
+                          - {key: jobId, value: j-1}
+                          - {key: appId, value: network.ping}
+                          - {key: state, value: running}
+                      - id: progress
+                        kind: progress
+                        progress: {label: Running, text: Job is running}
+                    actions:
+                      - {id: navigation.back, label: Back, enabled: true}
+                      - {id: job.run_again, label: Run again, enabled: true}
+                      - {id: job.cancel, label: Cancel, enabled: true}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409':
+          description: Stale view identity or revision; response includes current view metadata.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ErrorEnvelope'
+                  - type: object
+                    properties:
+                      viewId: {type: string}
+                      revision: {type: integer}
+              examples:
+                stale:
+                  value:
+                    error:
+                      code: stale_view
+                      message: revision does not match current session
+                      field: revision
+                    viewId: ping-form
+                    revision: 3
+        '500': {$ref: '#/components/responses/InternalError'}
+  /api/v1/events:
+    get:
+      operationId: streamEvents
+      summary: Stream ordered server-sent events
+      description: Streams live events and bounded replay. Use `Last-Event-ID` to resume; too-old IDs may receive an `events.reset` payload.
+      parameters:
+        - name: Last-Event-ID
+          in: header
+          required: false
+          schema: {type: string}
+          description: Last received numeric event id for bounded replay.
+      responses:
+        '200':
+          description: Server-sent event stream. Each event data line is an EventPayload JSON object.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              examples:
+                viewChanged:
+                  value: |
+                    id: 12
+                    event: view.changed
+                    data: {"id":12,"type":"view.changed","sessionId":"s-1","revision":3,"time":"2026-06-22T12:00:00Z"}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '500': {$ref: '#/components/responses/InternalError'}
+components:
+  parameters:
+    SessionID:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: s-1
+  responses:
+    BadRequest:
+      description: Invalid request.
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ErrorEnvelope'}
+          examples:
+            missing:
+              value: {error: {code: invalid_action, message: missing actionId, field: actionId}}
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ErrorEnvelope'}
+          examples:
+            missingSession:
+              value: {error: {code: not_found, message: session not found}}
+    InternalError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/ErrorEnvelope'}
+          examples:
+            internal:
+              value: {error: {code: internal_error, message: unexpected error}}
+  schemas:
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      additionalProperties: true
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          additionalProperties: false
+          properties:
+            code: {type: string}
+            message: {type: string}
+            field: {type: string}
+    Session:
+      type: object
+      required: [sessionId, revision]
+      additionalProperties: false
+      properties:
+        sessionId: {type: string, examples: [s-1]}
+        currentAppId: {type: string, examples: [home, network.ping, network.nmap]}
+        formValues:
+          type: object
+          additionalProperties: {type: string}
+        selectedJobId: {type: string}
+        revision: {type: integer, minimum: 1}
+    ActionRequest:
+      type: object
+      required: [actionId, viewId, revision]
+      additionalProperties: false
+      properties:
+        actionId:
+          type: string
+          description: Semantic ViewAction id, such as app.open, form.update, job.start, job.cancel, navigation.back, job.select, or job.run_again.
+        viewId:
+          type: string
+          description: Caller-observed ViewDocument viewId.
+        revision:
+          type: integer
+          minimum: 1
+          description: Caller-observed ViewDocument revision.
+        params:
+          type: object
+          additionalProperties: true
+          description: Semantic action parameters, commonly appId or jobId.
+        values:
+          type: object
+          additionalProperties: {type: string}
+          description: Form field values for form.update/job.start flows.
+        appId:
+          type: string
+          deprecated: true
+          description: Compatibility alias accepted by the daemon; prefer params.appId.
+        jobId:
+          type: string
+          deprecated: true
+          description: Compatibility alias accepted by the daemon; prefer params.jobId.
+    Job:
+      type: object
+      required: [id, jobId, appId, state, result, created, updated]
+      additionalProperties: false
+      properties:
+        id: {type: string}
+        jobId: {type: string}
+        appId: {type: string}
+        sessionId: {type: string}
+        state:
+          type: string
+          enum: [running, done, failed, canceled]
+        result:
+          type: object
+          additionalProperties: true
+        created: {type: string, format: date-time}
+        updated: {type: string, format: date-time}
+    EventPayload:
+      type: object
+      required: [id, type, time]
+      additionalProperties: false
+      properties:
+        id: {type: integer}
+        type:
+          type: string
+          examples: [view.changed, job.started, job.finished, events.reset]
+        job:
+          type: object
+          additionalProperties: true
+        stream: {type: string}
+        data: {type: string}
+        progress: true
+        sessionId: {type: string}
+        revision: {type: integer}
+        reset: {type: boolean}
+        time: {type: string, format: date-time}

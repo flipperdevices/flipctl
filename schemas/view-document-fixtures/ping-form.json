@@ -1,0 +1,39 @@
+{
+  "apiVersion": "viewdoc.flipctl.dev/v1alpha1",
+  "sessionId": "fixture",
+  "viewId": "ping-form",
+  "revision": 1,
+  "title": "Ping",
+  "blocks": [
+    {
+      "id": "form",
+      "kind": "form",
+      "title": "Start Ping",
+      "fields": [
+        {
+          "id": "target",
+          "label": "Target",
+          "type": "text",
+          "default": "example.com",
+          "required": true,
+          "validation": "hostname-or-ip"
+        },
+        {
+          "id": "count",
+          "label": "Count",
+          "type": "number",
+          "default": "4",
+          "required": true
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "job.start",
+      "label": "Start ping",
+      "enabled": true,
+      "role": "primary"
+    }
+  ]
+}

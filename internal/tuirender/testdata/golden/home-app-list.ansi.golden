@@ -1,0 +1,9 @@
+[1;36mFlipCTL[0m FlipCTL Apps
+[2mview=home-app-list revision=1 session=fixture[0m
+
+[1mtext intro — Welcome[0m
+Choose an app to start a session.
+
+[1mlist apps — Apps[0m
+• Ping [ping] — Check host reachability
+• Nmap [nmap] — Scan allowed ports

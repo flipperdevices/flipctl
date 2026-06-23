@@ -1,0 +1,13 @@
+[1;36mFlipCTL[0m Ping Success
+[2mview=ping-success revision=3 session=fixture[0m
+
+[1mkey_value summary — Summary[0m
+• Transmitted: 4
+• Received: 4
+• Loss: 0%
+• Average RTT: 12.4 ms
+
+[1mtable replies — Replies[0m
+Seq | From | TTL | Time
+1 | 93.184.216.34 | 56 | 12.3 ms
+2 | 93.184.216.34 | 56 | 12.5 ms

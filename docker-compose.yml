@@ -1,0 +1,26 @@
+services:
+  flipctld:
+    build:
+      context: .
+      target: runtime
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/readyz"]
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 5
+
+  flipctld-real-tools:
+    profiles: ["real-tools"]
+    build:
+      context: .
+      target: runtime-real-tools
+    network_mode: host
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:18081/readyz"]
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 5

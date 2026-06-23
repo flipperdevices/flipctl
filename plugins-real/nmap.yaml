@@ -1,0 +1,22 @@
+apiVersion: flipctl.app/v1alpha1
+kind: CommandApp
+metadata:
+  id: network.nmap
+  title: Nmap
+  summary: Run real nmap in the real-tools profile
+  category: Network
+  version: 0.1.0
+form:
+  - id: target
+    label: Target
+    type: string
+    required: true
+    default: ya.ru
+execution:
+  executable: /usr/bin/nmap
+  args: ["-sT", "-Pn", "--stats-every", "1s", "-p", "80", "{{target}}"]
+  timeoutSeconds: 30
+parser: nmap
+policy:
+  fakeDefault: false
+  allowPrivileged: false

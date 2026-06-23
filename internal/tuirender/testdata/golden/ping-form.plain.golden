@@ -1,0 +1,7 @@
+FlipCTL Ping
+view=ping-form revision=1 session=fixture
+Actions: Start ping[job.start]
+
+form form — Start Ping
+• Target (text required): example.com — hostname-or-ip
+• Count (number required): 4

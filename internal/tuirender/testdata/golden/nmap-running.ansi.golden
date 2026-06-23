@@ -1,0 +1,8 @@
+[1;36mFlipCTL[0m Nmap Running
+[2mview=nmap-running revision=2 session=fixture[0m
+
+[1mprogress status — Connect scan[0m
+Connect Scan 50.0%: running against target-http
+
+[1mlog output — Output[0m
+[1] stdout Stats: 0:00:01 elapsed; 0 hosts completed

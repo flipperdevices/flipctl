@@ -1,0 +1,147 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Web Canvas ViewDocument semantic draw log > emits deterministic draw commands for every canonical fixture > empty-job-history 1`] = `
+"clear:256x144
+title:Job History
+section:region:No jobs:notice: No jobs
+status:alert:No jobs:info No jobs have run in this session."
+`;
+
+exports[`Web Canvas ViewDocument semantic draw log > emits deterministic draw commands for every canonical fixture > home-app-list 1`] = `
+"clear:256x144
+title:FlipCTL Apps
+section:region:Welcome:text: Welcome
+text:note:Welcome:Choose an app to start a session.
+section:region:Apps:list: Apps
+text:listitem:Ping:Ping ping Check host reachability
+text:listitem:Nmap:Nmap nmap Scan allowed ports"
+`;
+
+exports[`Web Canvas ViewDocument semantic draw log > emits deterministic draw commands for every canonical fixture > job-history 1`] = `
+"clear:256x144
+title:Job History
+section:region:Recent jobs:table: Recent jobs
+text:row:Recent jobs:Ping done 4 replies
+text:row:Recent jobs:Nmap done 1 open port"
+`;
+
+exports[`Web Canvas ViewDocument semantic draw log > emits deterministic draw commands for every canonical fixture > nmap-failure 1`] = `
+"clear:256x144
+title:Nmap Failure
+section:region:Nmap rejected:notice: Nmap rejected
+status:alert:Nmap rejected:error target must be an allowed internal service"
+`;
+
+exports[`Web Canvas ViewDocument semantic draw log > emits deterministic draw commands for every canonical fixture > nmap-form 1`] = `
+"clear:256x144
+title:Nmap
+section:region:Start Nmap:form: Start Nmap
+text:textbox:Target:Target target-http required
+text:textbox:Ports:Ports 80,443 bounded-port-list required
+text:button:Start nmap:job.start Start nmap"
+`;
+
+exports[`Web Canvas ViewDocument semantic draw log > emits deterministic draw commands for every canonical fixture > nmap-running 1`] = `
+"clear:256x144
+title:Nmap Running
+section:region:Connect scan:progress: Connect scan
+text:progressbar:Connect Scan:Connect Scan running against target-http 50/100
+section:region:Output:log: Output
+text:log:stdout 1:1 stdout Stats: 0:00:01 elapsed; 0 hosts completed"
+`;
+
+exports[`Web Canvas ViewDocument semantic draw log > emits deterministic draw commands for every canonical fixture > nmap-success 1`] = `
+"clear:256x144
+title:Nmap Success
+section:region:Port states:table: Port states
+text:row:Port states:target-http 80/tcp http open
+text:row:Port states:target-http 443/tcp https closed"
+`;
+
+exports[`Web Canvas ViewDocument semantic draw log > emits deterministic draw commands for every canonical fixture > ping-failure 1`] = `
+"clear:256x144
+title:Ping Failure
+section:region:Ping failed:notice: Ping failed
+status:alert:Ping failed:error partial packet loss
+section:region:Summary:key_value: Summary
+text:status:Transmitted:Transmitted 4
+text:status:Received:Received 2
+text:status:Loss:Loss 50%"
+`;
+
+exports[`Web Canvas ViewDocument semantic draw log > emits deterministic draw commands for every canonical fixture > ping-form 1`] = `
+"clear:256x144
+title:Ping
+section:region:Start Ping:form: Start Ping
+text:textbox:Target:Target example.com hostname-or-ip required
+text:textbox:Count:Count 4 required
+text:button:Start ping:job.start Start ping"
+`;
+
+exports[`Web Canvas ViewDocument semantic draw log > emits deterministic draw commands for every canonical fixture > ping-running 1`] = `
+"clear:256x144
+title:Ping Running
+section:region:Progress:progress: Progress
+text:progressbar:Ping:Ping 2 of 4 replies received 2/4
+section:region:Output:log: Output
+text:log:stdout 1:1 stdout 64 bytes from 93.184.216.34: sequence=1 ttl=56 time=12.3 m
+text:log:stdout 2:2 stdout 64 bytes from 93.184.216.34: sequence=2 ttl=56 time=12.5 m
+text:button:Cancel:job.cancel Cancel"
+`;
+
+exports[`Web Canvas ViewDocument semantic draw log > emits deterministic draw commands for every canonical fixture > ping-success 1`] = `
+"clear:256x144
+title:Ping Success
+section:region:Summary:key_value: Summary
+text:status:Transmitted:Transmitted 4
+text:status:Received:Received 4
+text:status:Loss:Loss 0%
+text:status:Average RTT:Average RTT 12.4 ms
+section:region:Replies:table: Replies
+text:row:Replies:1 93.184.216.34 56 12.3 ms
+text:row:Replies:2 93.184.216.34 56 12.5 ms"
+`;
+
+exports[`Web Canvas ViewDocument semantic draw log > snapshots generic representative 256x144 states instead of PNG goldens > generic-error 1`] = `
+"clear:::256x144
+title:8:14:Error
+section:8:28:region:notice:notice: error
+status:8:38:alert:notice:error failed
+text:8:48:button:Back:navigation.back Back"
+`;
+
+exports[`Web Canvas ViewDocument semantic draw log > snapshots generic representative 256x144 states instead of PNG goldens > generic-form 1`] = `
+"clear:::256x144
+title:8:14:Command form
+section:8:28:region:Inputs:form: Inputs
+text:8:38:textbox:Target:Target required
+text:8:48:button:Run:job.start Run"
+`;
+
+exports[`Web Canvas ViewDocument semantic draw log > snapshots generic representative 256x144 states instead of PNG goldens > generic-home 1`] = `
+"clear:::256x144
+title:8:14:Home
+section:8:28:region:Applications:list: Applications
+text:8:38:listitem:Network check:Network check form Open a generic command form
+text:8:48:button:Open:app.open Open"
+`;
+
+exports[`Web Canvas ViewDocument semantic draw log > snapshots generic representative 256x144 states instead of PNG goldens > generic-result 1`] = `
+"clear:::256x144
+title:8:14:Result
+section:8:28:region:Summary:key_value: Summary
+text:8:38:status:state:state done
+section:8:48:region:Rows:table: Rows
+text:8:58:row:Rows:row one
+text:8:68:button:Back:navigation.back Back"
+`;
+
+exports[`Web Canvas ViewDocument semantic draw log > snapshots generic representative 256x144 states instead of PNG goldens > generic-running 1`] = `
+"clear:::256x144
+title:8:14:Running
+section:8:28:region:Progress:progress: Progress
+text:8:38:progressbar:Progress:Progress working 1/4
+section:8:48:region:Output:log: Output
+text:8:58:log:stdout:stdout line one
+text:8:68:button:Cancel:job.cancel Cancel"
+`;
