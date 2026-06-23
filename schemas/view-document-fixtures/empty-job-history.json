@@ -1,0 +1,16 @@
+{
+  "apiVersion": "viewdoc.flipctl.dev/v1alpha1",
+  "sessionId": "fixture",
+  "viewId": "empty-job-history",
+  "revision": 1,
+  "title": "Job History",
+  "blocks": [
+    {
+      "id": "empty",
+      "kind": "notice",
+      "severity": "info",
+      "title": "No jobs",
+      "text": "No jobs have run in this session."
+    }
+  ]
+}

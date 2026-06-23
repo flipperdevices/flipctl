@@ -1,0 +1,5 @@
+[1;36mFlipCTL[0m Nmap Failure
+[2mview=nmap-failure revision=2 session=fixture[0m
+
+[1mnotice notice — Nmap rejected[0m
+[31merror: target must be an allowed internal service[0m

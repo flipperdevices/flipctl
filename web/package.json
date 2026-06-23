@@ -1,0 +1,23 @@
+{
+  "name": "flipctl-web",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "test": "vitest run",
+    "lint": "vp lint",
+    "format": "vp fmt . --write",
+    "check": "vp check"
+  },
+  "dependencies": {
+    "@preact/preset-vite": "latest",
+    "preact": "latest",
+    "vite": "latest"
+  },
+  "devDependencies": {
+    "typescript": "latest",
+    "vitest": "latest"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

@@ -1,0 +1,44 @@
+{
+  "apiVersion": "viewdoc.flipctl.dev/v1alpha1",
+  "sessionId": "fixture",
+  "viewId": "job-history",
+  "revision": 1,
+  "title": "Job History",
+  "blocks": [
+    {
+      "id": "jobs",
+      "kind": "table",
+      "title": "Recent jobs",
+      "columns": [
+        {
+          "id": "app",
+          "label": "App"
+        },
+        {
+          "id": "status",
+          "label": "Status"
+        },
+        {
+          "id": "summary",
+          "label": "Summary"
+        }
+      ],
+      "rows": [
+        {
+          "cells": {
+            "app": "Ping",
+            "status": "done",
+            "summary": "4 replies"
+          }
+        },
+        {
+          "cells": {
+            "app": "Nmap",
+            "status": "done",
+            "summary": "1 open port"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+FlipCTL Ping Failure
+view=ping-failure revision=3 session=fixture
+
+notice notice — Ping failed
+error: partial packet loss
+
+key_value summary — Summary
+• Transmitted: 4
+• Received: 2
+• Loss: 50%

@@ -1,79 +1,155 @@
-# FlipCTL — a UI framework for embedded Linux systems
+# FlipCTL architecture prototype
 
-FlipCTL is a lightweight UI framework for embedded and headless Linux systems, designed as a modern replacement for traditional HMI solutions. Originally built for Flipper One, it runs on any Linux system — from servers and routers to single-board computers, without requiring a desktop environment.
+FlipCTL is a lightweight control layer for embedded and headless Linux systems.
 
-On one side, FlipCTL interacts with the operating system and wrappers around command line utilities such as `ping` and `nmap`. On the other, it enables users to control the system through various control interfaces, such as a web browser, an SSH terminal, or a physical control panel with an LCD display.
+This repository proposes one concrete way to implement the [official FlipCTL vision](https://docs.flipper.net/one/cpu-software/flipctl): a small daemon owns applications and system work, while Web, terminal, and constrained-display frontends present the same state in forms suited to their environment.
 
-![](files/pics/flipctl-gui-scheme.png)
+The prototype is intentionally narrow. It wraps Ping and Nmap, but its main purpose is to prove the architecture.
 
-> [!NOTE]
-> We are looking for a Software Architect to join the FlipCTL project. Learn more [here](#how-to-contribute).
+## Demo
 
-## Architecture
+Click the preview below to watch the demo video:
 
-![](files/pics/flipctl-architecture.jpg)
+[![FlipCTL demo preview](docs/demo-thumbnail.png)](docs/demo.webm)
 
-Core Components of FlipCTL:
+[Download the demo video](docs/demo.webm).
 
-* **Backend** is responsible for managing the operating system itself. It can interact with systemd, control OS services, configure networking through NetworkManager or systemd-networkd, and wrap existing command-line utilities such as nmap, ping, and traceroute. The backend exposes these capabilities through APIs that are consumed by the frontend.
+## What this prototype proves
 
-* **UI Frontend** is currently built using HTML and JavaScript. Despite the associated overhead, this approach enables rapid UI development and compact implementation, while avoiding the need for specialized expertise required by many embedded UI frameworks.
+- One daemon can drive both a Web UI and an interactive TUI.
+- Frontends can navigate independently while sharing the same jobs and system state.
+- A job started in one frontend can be observed and cancelled in another.
+- Applications can be described without embedding Web, terminal, or Canvas UI code.
+- The same semantic screen description can be rendered as browser controls, terminal widgets, or a 256×144 Canvas preview.
+- The main userspace behavior can be tested without owning a Flipper One.
 
-* **Renderer** is a web browser. On Flipper One, we currently use a headless WebKit instance running directly on top of DRM (Direct Rendering Manager), without Xorg or Wayland. We also want to support multiple renderer options, for example, TUI (Text User Interface) for using  directly from the console.
+```mermaid
+flowchart LR
+    A[Command applications] --> D[flipctld]
+    D --> S[Sessions]
+    D --> J[Shared jobs]
+    D --> E[Ordered events]
+    S --> V[ViewDocument projector]
+    J --> V
+    V --> W[Web UI]
+    V --> T[TUI]
+    V --> C[256×144 Canvas preview]
+    W -->|semantic actions| D
+    T -->|semantic actions| D
+```
 
-* **App Wrappers** integrate standard Linux command line applications into FlipCTL, providing controls for managing them and displaying their output.
+## Core idea
 
-* **Control Interfaces** are the devices and applications used to control FlipCTL:
-    * Flipper One.
-    * FlipCTL Control Panel.
-    * TUI (Text UI) via a local terminal or SSH.
-    * Web browser or desktop application.
+FlipCTL does not try to share Web components with terminal widgets.
 
-## FlipCTL Control Panel
+Instead, the daemon publishes a small semantic document containing concepts such as forms, lists, notices, progress, logs, summaries, tables, and available actions. Each frontend decides how those concepts should look and behave on its own platform.
 
-FlipCTL Control Panel is a compact device featuring the same display as the Flipper One, along with physical buttons and a couple of LEDs. It provides full control over FlipCTL and can also emulate Power and Reset button presses on the host system using built-in relays.
+This follows the official principle that **data and UI logic are separated from the renderer**, while making the boundary concrete and testable.
 
-![](files/pics/flipctl-control-panel-mount-types.jpg)
+## Main components
 
-### Mounting options
+| Component | Responsibility |
+|---|---|
+| `flipctld` | Owns application discovery, frontend sessions, jobs, events, command execution, and view projection |
+| Declarative command apps | Describe inputs, command arguments, parser choice, and execution limits |
+| `ViewDocument` | Versioned renderer-neutral description of the current session view |
+| Web UI | Accessible browser renderer and action client |
+| TUI | Keyboard-driven terminal renderer and action client |
+| Canvas preview | Demonstrates the same document within the Flipper One 256×144 display constraints |
+| Fake command environment | Makes the architectural flow deterministic in local tests and CI |
 
-FlipCTL Control Panel can be:
+## Why sessions and jobs are separate
 
-* placed on a desk (using a desktop stand);
-* mounted on a server or PC case;
-* mounted to server rack (using a mounting bracket);
-* mounted directly to an SBC (single-board computer) using screws and standoffs.
+A **session** belongs to one frontend. It stores navigation, form values, selection, and the revision of the screen currently shown.
 
-> [!NOTE]
-> When mounted on an SBC, [brass standoffs](https://thepihut.com/products/brass-m2-5-standoffs-16mm-tall-black-plated-pack-of-2) and a [GPIO riser header](https://thepihut.com/products/gpio-riser-header-for-raspberry-pi) can be used to provide additional clearance for cooling of the SBC's chips.
+A **job** belongs to the daemon. It can continue after a frontend disconnects and can be observed by more than one session.
 
-### Host connectivity options
+This distinction is what allows Web and TUI clients to navigate independently while operating on one shared system.
 
-FlipCTL Control Panel supports two host interfaces for communication with and power supply from the host system:
-* **USB 2.0** via the USB-C connector on the back of the device. Suitable for connecting to servers, routers, PCs, and virtually any other host system.
-* **SPI** via the 40-pin header on the back of the device. Designed for direct connection to single-board computers (SBCs). 
+## Plugin direction
 
-> [!NOTE]
-> The choice of SPI is not final yet. We are discussing it in [this issue](https://github.com/flipperdevices/flipperone-hardware/issues/133).
+The MVP uses declarative command applications for wrappers such as Ping and Nmap. They are small, inspectable, and sufficient to prove multi-frontend behavior.
 
-![](files/pics/flipctl-back-side.png)
+The proposed evolution is incremental:
 
-FlipCTL also features a 2.54 mm pitch header (not shown on the image above) for connecting to the host motherboard's front panel connector, usually labeled F_PANEL. This enables local or remote control of the host's power and reset functions through FlipCTL.
+1. **Declarative command apps** for common command-line tools.
+2. **Supervised native plugins** for complex, long-lived integrations.
+3. **WebAssembly components** as a future option for strongly isolated third-party logic.
 
-## How to contribute
+The later tiers are intentionally not prerequisites for the prototype.
 
-This page provides a high level overview of FlipCTL and its architecture. While the core concepts are defined, there are many ways to implement them in practice. We invite the community to propose a concrete architecture for FlipCTL by submitting a Pull Request to this repository. The author of the most compelling architecture proposal may be invited to take on the role of Project Architect and help shape the future of FlipCTL.
+## Try the proof
 
-A Pull Request should include:
+```bash
+make check
+make demo
+```
 
-- A description of your proposed FlipCTL architecture implementation, including the components you would use and how they would interact with each other.
+Then open the [Web UI](http://localhost:8080/) and start the TUI against the same daemon:
 
-- A description of your vision for the plugin system and the wrappers for standard command-line utilities like `ping` or `nmap`.
+```bash
+go run ./cmd/flipctl-tui -addr http://localhost:8080
+```
 
-- A minimal working FlipCTL prototype capable of driving multiple frontends. One frontend should be a Web UI, while another should be a TUI.
+To run the demo fully containerized with the real Ping and Nmap wrappers, use the helper scripts under `tmp/` from the repository root. The start script builds and launches the `real-tools` Docker Compose profile, waits for the daemon on `http://localhost:18081/readyz`, and serves the Web UI at <http://localhost:18081>. Jobs run against real targets such as `ya.ru` or `example.com`.
 
-## Links
+```bash
+./tmp/start-real-tools-demo.sh
+./tmp/run-tui-real-tools.sh
+./tmp/stop-real-tools-demo.sh
+```
 
-* [FlipCTL page](https://docs.flipper.net/one/cpu-software/flipctl) on the Flipper One Dev Portal.
-* [Blog post](https://blog.flipper.net/flipctl-our-gui-framework-for-embedded-linux-systems/) about FlipCTL in the Flipper Devices blog.
-* [Fake FLipCTL2](https://github.com/flipperdevices/flipperone-testing/tree/dev/fake-flipctl2) current dirty AI-made prototype of FlipCTL, needs complete rework.
+Use `./tmp/run-tui-real-tools.sh` from another terminal while the containerized daemon is running. Use `./tmp/stop-real-tools-demo.sh` when finished to bring the Compose stack down and remove orphaned containers for the demo project.
+
+The most important acceptance scenario is:
+
+1. Web and TUI create separate sessions.
+2. Web starts a deterministic Ping job.
+3. TUI sees the same job.
+4. TUI cancels it.
+5. Web receives the update and renders the cancelled state.
+
+Docker and ARM64 userspace smoke tests exercise the same canonical flow. They do not claim to emulate Flipper One hardware.
+
+```bash
+make docker-fake-smoke
+make arm64-userspace-smoke
+```
+
+The ARM64 smoke test runs an ARM64 userspace container through Docker/QEMU. On a local machine, register ARM64 `binfmt_misc` support first if Docker reports `exec format error`:
+
+```bash
+docker run --privileged --rm tonistiigi/binfmt --install arm64
+```
+
+## Deliberate MVP boundaries
+
+This proposal does not yet choose the final answer for every product decision.
+
+- Canvas is a renderer preview, not a finished physical-device frontend.
+- Sessions and jobs are in memory.
+- Physical display startup, MCU input, and framebuffer transfer require hardware validation.
+- Native and Wasm plugin runtimes remain future decisions.
+- Production service, networking, and hardware adapters remain behind future typed host interfaces.
+
+These are documented as decision handoffs rather than hidden gaps.
+
+## Documentation
+
+- [Architecture proposal](docs/architecture.md)
+- [Decisions, handoffs, and roadmap](docs/decisions-and-roadmap.md)
+- [ViewDocument contract](docs/view-document.md)
+- [Plugin model](docs/plugin.md)
+- [Testing strategy](docs/testing.md)
+
+## Relationship to the Flipper One vision
+
+This proposal is guided by the official project material:
+
+- [FlipCTL vision and contribution brief](https://docs.flipper.net/one/cpu-software/flipctl)
+- [Flipper One UI and 256×144 display constraints](https://docs.flipper.net/one/user-interface/about)
+- [MCU↔CPU interconnect](https://docs.flipper.net/one/mcu-firmware/mcu-cpu-interconnect)
+- [General Flipper R&D Debian testing environment](https://docs.flipper.net/one/testing/general)
+- [Supported RK3576 boards](https://docs.flipper.net/one/cpu-software/supported-boards)
+
+The repository is an implementation proposal, not a claim that every product and hardware decision is final.

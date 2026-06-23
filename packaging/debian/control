@@ -1,0 +1,5 @@
+Package: flipctl
+Version: 0.1.0
+Architecture: any
+Maintainer: FlipCTL Contributors <dev@example.invalid>
+Description: FlipCTL MVP daemon and TUI skeleton

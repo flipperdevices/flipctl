@@ -1,0 +1,45 @@
+{
+  "apiVersion": "viewdoc.flipctl.dev/v1alpha1",
+  "sessionId": "fixture",
+  "viewId": "ping-running",
+  "revision": 2,
+  "title": "Ping Running",
+  "blocks": [
+    {
+      "id": "status",
+      "kind": "progress",
+      "title": "Progress",
+      "progress": {
+        "label": "Ping",
+        "value": 2,
+        "max": 4,
+        "text": "2 of 4 replies received"
+      }
+    },
+    {
+      "id": "output",
+      "kind": "log",
+      "title": "Output",
+      "lines": [
+        {
+          "id": "1",
+          "source": "stdout",
+          "text": "64 bytes from 93.184.216.34: sequence=1 ttl=56 time=12.3 ms"
+        },
+        {
+          "id": "2",
+          "source": "stdout",
+          "text": "64 bytes from 93.184.216.34: sequence=2 ttl=56 time=12.5 ms"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "job.cancel",
+      "label": "Cancel",
+      "enabled": true,
+      "role": "destructive"
+    }
+  ]
+}

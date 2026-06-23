@@ -1,0 +1,29 @@
+apiVersion: flipctl.app/v1alpha1
+kind: CommandApp
+metadata:
+  id: network.ping
+  title: Ping
+  summary: Test IP reachability with deterministic fake ping
+  category: Network
+  version: 0.1.0
+form:
+  - id: target
+    label: Target
+    type: string
+    required: true
+    default: 127.0.0.1
+    pattern: '^[A-Za-z0-9_.:-]+$'
+  - id: count
+    label: Count
+    type: int
+    default: "3"
+    min: 1
+    max: 5
+execution:
+  executable: ./fakecmds/fake-ping
+  args: ["-c", "{{count}}", "{{target}}"]
+  timeoutSeconds: 5
+parser: ping
+policy:
+  fakeDefault: true
+  network: icmp

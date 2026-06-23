@@ -1,0 +1,35 @@
+{
+  "apiVersion": "viewdoc.flipctl.dev/v1alpha1",
+  "sessionId": "fixture",
+  "viewId": "ping-failure",
+  "revision": 3,
+  "title": "Ping Failure",
+  "blocks": [
+    {
+      "id": "notice",
+      "kind": "notice",
+      "severity": "error",
+      "title": "Ping failed",
+      "text": "partial packet loss"
+    },
+    {
+      "id": "summary",
+      "kind": "key_value",
+      "title": "Summary",
+      "pairs": [
+        {
+          "key": "Transmitted",
+          "value": "4"
+        },
+        {
+          "key": "Received",
+          "value": "2"
+        },
+        {
+          "key": "Loss",
+          "value": "50%"
+        }
+      ]
+    }
+  ]
+}

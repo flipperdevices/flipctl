@@ -1,0 +1,73 @@
+{
+  "apiVersion": "viewdoc.flipctl.dev/v1alpha1",
+  "sessionId": "fixture",
+  "viewId": "ping-success",
+  "revision": 3,
+  "title": "Ping Success",
+  "blocks": [
+    {
+      "id": "summary",
+      "kind": "key_value",
+      "title": "Summary",
+      "pairs": [
+        {
+          "key": "Transmitted",
+          "value": "4"
+        },
+        {
+          "key": "Received",
+          "value": "4"
+        },
+        {
+          "key": "Loss",
+          "value": "0%"
+        },
+        {
+          "key": "Average RTT",
+          "value": "12.4 ms"
+        }
+      ]
+    },
+    {
+      "id": "replies",
+      "kind": "table",
+      "title": "Replies",
+      "columns": [
+        {
+          "id": "seq",
+          "label": "Seq"
+        },
+        {
+          "id": "from",
+          "label": "From"
+        },
+        {
+          "id": "ttl",
+          "label": "TTL"
+        },
+        {
+          "id": "time",
+          "label": "Time"
+        }
+      ],
+      "rows": [
+        {
+          "cells": {
+            "seq": "1",
+            "from": "93.184.216.34",
+            "ttl": "56",
+            "time": "12.3 ms"
+          }
+        },
+        {
+          "cells": {
+            "seq": "2",
+            "from": "93.184.216.34",
+            "ttl": "56",
+            "time": "12.5 ms"
+          }
+        }
+      ]
+    }
+  ]
+}

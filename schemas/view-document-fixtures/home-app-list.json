@@ -1,0 +1,48 @@
+{
+  "apiVersion": "viewdoc.flipctl.dev/v1alpha1",
+  "sessionId": "fixture",
+  "viewId": "home-app-list",
+  "revision": 1,
+  "title": "FlipCTL Apps",
+  "blocks": [
+    {
+      "id": "intro",
+      "kind": "text",
+      "title": "Welcome",
+      "text": "Choose an app to start a session."
+    },
+    {
+      "id": "apps",
+      "kind": "list",
+      "title": "Apps",
+      "items": [
+        {
+          "label": "Ping",
+          "value": "ping",
+          "description": "Check host reachability",
+          "action": {
+            "id": "app.open",
+            "label": "Open Ping",
+            "enabled": true,
+            "params": {
+              "appId": "network.ping"
+            }
+          }
+        },
+        {
+          "label": "Nmap",
+          "value": "nmap",
+          "description": "Scan allowed ports",
+          "action": {
+            "id": "app.open",
+            "label": "Open Nmap",
+            "enabled": true,
+            "params": {
+              "appId": "network.nmap"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

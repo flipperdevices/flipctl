@@ -1,0 +1,7 @@
+.git
+.worktrees
+flipctld
+flipctl-tui
+web/node_modules
+web/dist
+**/.DS_Store

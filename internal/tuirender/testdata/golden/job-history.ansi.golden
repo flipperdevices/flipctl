@@ -1,0 +1,7 @@
+[1;36mFlipCTL[0m Job History
+[2mview=job-history revision=1 session=fixture[0m
+
+[1mtable jobs — Recent jobs[0m
+App | Status | Summary
+Ping | done | 4 replies
+Nmap | done | 1 open port

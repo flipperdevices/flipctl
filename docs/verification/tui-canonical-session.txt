@@ -1,0 +1,9 @@
+# TUI canonical session proof
+
+Command context: local go run ./cmd/flipctld on :18082 from feat/canonical-tui.
+Session creation response: {"sessionId":"s-1","currentAppId":"home","revision":1}
+Current view: viewId=home-app-list revision=1
+Canonical action request: {"actionId":"app.open","viewId":"home-app-list","revision":1,"appId":"network.ping"}
+Updated view: viewId=ping-form revision=2
+
+Result: canonical session action endpoint accepted viewId/revision/actionId and returned updated ViewDocument.

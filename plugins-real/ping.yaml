@@ -1,0 +1,28 @@
+apiVersion: flipctl.app/v1alpha1
+kind: CommandApp
+metadata:
+  id: network.ping
+  title: Ping
+  summary: Test IP reachability with real ping in the real-tools profile
+  category: Network
+  version: 0.1.0
+form:
+  - id: target
+    label: Target
+    type: string
+    required: true
+    default: ya.ru
+  - id: count
+    label: Count
+    type: int
+    default: "3"
+    min: 1
+    max: 5
+execution:
+  executable: /bin/ping
+  args: ["-n", "-c", "{{count}}", "-W", "1", "{{target}}"]
+  timeoutSeconds: 5
+parser: ping
+policy:
+  fakeDefault: false
+  network: icmp

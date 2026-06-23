@@ -1,0 +1,538 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flipctl.dev/schemas/view-document.json",
+  "title": "FlipCTL ViewDocument",
+  "description": "Canonical renderer-neutral semantic contract shared by FlipCTL frontends.",
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "sessionId",
+    "viewId",
+    "revision",
+    "title",
+    "blocks"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "viewdoc.flipctl.dev/v1alpha1"
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "viewId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "title": {
+      "type": "string"
+    },
+    "blocks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/block"
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/action"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "action": {
+      "type": "object",
+      "required": [
+        "id",
+        "label",
+        "enabled"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "role": {
+          "enum": [
+            "primary",
+            "secondary",
+            "destructive"
+          ]
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "blockBase": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string"
+        }
+      }
+    },
+    "block": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/textBlock"
+        },
+        {
+          "$ref": "#/$defs/noticeBlock"
+        },
+        {
+          "$ref": "#/$defs/listBlock"
+        },
+        {
+          "$ref": "#/$defs/formBlock"
+        },
+        {
+          "$ref": "#/$defs/keyValueBlock"
+        },
+        {
+          "$ref": "#/$defs/tableBlock"
+        },
+        {
+          "$ref": "#/$defs/logBlock"
+        },
+        {
+          "$ref": "#/$defs/progressBlock"
+        }
+      ]
+    },
+    "textBlock": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/blockBase"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "const": "text"
+        },
+        "title": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "noticeBlock": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/blockBase"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "severity",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "const": "notice"
+        },
+        "title": {
+          "type": "string"
+        },
+        "severity": {
+          "enum": [
+            "info",
+            "success",
+            "warning",
+            "error"
+          ]
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "listBlock": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/blockBase"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "items"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "const": "list"
+        },
+        "title": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/listItem"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "formBlock": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/blockBase"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "fields"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "const": "form"
+        },
+        "title": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/formField"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "keyValueBlock": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/blockBase"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "pairs"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "const": "key_value"
+        },
+        "title": {
+          "type": "string"
+        },
+        "pairs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/keyValuePair"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "tableBlock": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/blockBase"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "columns",
+        "rows"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "const": "table"
+        },
+        "title": {
+          "type": "string"
+        },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/tableColumn"
+          }
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/tableRow"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "logBlock": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/blockBase"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "lines"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "const": "log"
+        },
+        "title": {
+          "type": "string"
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/logLine"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "progressBlock": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/blockBase"
+        }
+      ],
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "progress"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "const": "progress"
+        },
+        "title": {
+          "type": "string"
+        },
+        "progress": {
+          "$ref": "#/$defs/progress"
+        }
+      },
+      "additionalProperties": false
+    },
+    "listItem": {
+      "type": "object",
+      "required": [
+        "label"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "action": {
+          "$ref": "#/$defs/action"
+        }
+      },
+      "additionalProperties": false
+    },
+    "formField": {
+      "type": "object",
+      "required": [
+        "id",
+        "label",
+        "type"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "default": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "validation": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "keyValuePair": {
+      "type": "object",
+      "required": [
+        "key",
+        "value"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tableColumn": {
+      "type": "object",
+      "required": [
+        "id",
+        "label"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tableRow": {
+      "type": "object",
+      "required": [
+        "cells"
+      ],
+      "properties": {
+        "cells": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "logLine": {
+      "type": "object",
+      "required": [
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "progress": {
+      "type": "object",
+      "required": [
+        "label"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

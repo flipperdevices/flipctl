@@ -1,0 +1,39 @@
+{
+  "apiVersion": "viewdoc.flipctl.dev/v1alpha1",
+  "sessionId": "fixture",
+  "viewId": "nmap-form",
+  "revision": 1,
+  "title": "Nmap",
+  "blocks": [
+    {
+      "id": "form",
+      "kind": "form",
+      "title": "Start Nmap",
+      "fields": [
+        {
+          "id": "target",
+          "label": "Target",
+          "type": "text",
+          "default": "target-http",
+          "required": true
+        },
+        {
+          "id": "ports",
+          "label": "Ports",
+          "type": "text",
+          "default": "80,443",
+          "required": true,
+          "validation": "bounded-port-list"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "job.start",
+      "label": "Start nmap",
+      "enabled": true,
+      "role": "primary"
+    }
+  ]
+}

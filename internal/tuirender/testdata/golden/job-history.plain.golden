@@ -1,0 +1,7 @@
+FlipCTL Job History
+view=job-history revision=1 session=fixture
+
+table jobs — Recent jobs
+App | Status | Summary
+Ping | done | 4 replies
+Nmap | done | 1 open port

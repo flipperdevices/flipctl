@@ -1,0 +1,6 @@
+/flipctld
+/flipctl-tui
+/.flipctld.pid
+web/node_modules/
+web/dist/
+.DS_Store

@@ -1,0 +1,7 @@
+[1;36mFlipCTL[0m Nmap Success
+[2mview=nmap-success revision=3 session=fixture[0m
+
+[1mtable ports — Port states[0m
+Host | Port | Service | State
+target-http | 80/tcp | http | open
+target-http | 443/tcp | https | closed

@@ -1,0 +1,23 @@
+apiVersion: flipctl.app/v1alpha1
+kind: CommandApp
+metadata:
+  id: network.nmap
+  title: Nmap
+  summary: Policy-limited host discovery using deterministic fake nmap
+  category: Network
+  version: 0.1.0
+form:
+  - id: target
+    label: CIDR/host
+    type: string
+    required: true
+    default: 127.0.0.1
+    pattern: '^[A-Za-z0-9_.:/-]+$'
+execution:
+  executable: ./fakecmds/fake-nmap
+  args: ["-sn", "{{target}}"]
+  timeoutSeconds: 10
+parser: nmap
+policy:
+  fakeDefault: true
+  allowPrivileged: false
