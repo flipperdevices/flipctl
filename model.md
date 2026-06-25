@@ -20,6 +20,7 @@ Automatically generated from the set of loaded plugins. It displays a list of al
 - Task Screen
 
 Created per plugin based on its JSON definition. This screen contains controls (fields, buttons, tables, etc.) that:
+
   - Show the current status and output of the running application.
   - Provide input elements for parameters and control actions (e.g., start/stop).
 
