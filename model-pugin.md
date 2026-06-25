@@ -5,7 +5,7 @@ Plugin example:
 {
   "id": "ping",
   "title": "Ping Host",
-  "description": "Проверка доступности хоста по ICMP",
+  "description": "Ping utility",
   "command": "/bin/ping",
   "args": ["-c", "{count}", "{host}"],
   "cwd": "/tmp",
