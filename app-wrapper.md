@@ -16,3 +16,13 @@
 - The Manager (at `/appwrap/manager`) provides methods for process management.
 - The Process object (at `/appwrap/process/<id>`) provides signals for receiving data.
 
+## Key Responsibilities
+
+- **Process Launch** – Spawning applications with specified command‑line arguments, working directory, and environment variables.
+- **Lifecycle Management** – Controlling the process lifecycle: stopping via signals, forced termination, and enforcing timeouts.
+- **Interactive I/O** – Handling interactive input/output for utilities that require a pseudo‑terminal (PTY) via `node-pty`.
+- **Stream Redirection** – Capturing `stdout` and `stderr` streams and forwarding them as D‑Bus signals.
+- **Status Notifications** – Emitting events for process start, termination (with exit code or signal), and errors.
+- **Monitoring** – Maintaining a registry of all active processes and providing the ability to list them.
+
+
