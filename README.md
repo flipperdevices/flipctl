@@ -14,7 +14,7 @@ The user interface services. Each daemon handles a specific presentation medium:
 - web_viewd – Web-based interface rendering.
 - tui_viewd – Terminal-based (TUI) interface rendering.
 
-3. AppWrapper (app_wrapperd)
+3. [AppWrapper](app-wrapper.md) (app_wrapperd)
 
 The execution service. This daemon is responsible for managing, spawning, and interfacing with underlying console utilities.
 
