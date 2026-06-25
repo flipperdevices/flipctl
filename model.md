@@ -12,11 +12,13 @@ Plugins are defined as JSON files stored in the plugins directory. On startup, t
 2. **Screens**
 
 - Main Screen (Menu)
+
 Automatically generated from the set of loaded plugins. It displays a list of all available tasks (applications) that the user can launch.
 
 - Task Screen
 
 Created per plugin based on its JSON definition. This screen contains controls (fields, buttons, tables, etc.) that:
+
     - Show the current status and output of the running application.
     - Provide input elements for parameters and control actions (e.g., start/stop).
 
@@ -25,6 +27,7 @@ Created per plugin based on its JSON definition. This screen contains controls (
 Controls are the UI elements that populate a task screen. They are defined inside the plugin's controls array.
 
 Controls can be:
+
 - Static – explicitly described once in the JSON.
 - Auto‑generated (simplified) – derived automatically from the params section to avoid duplicating input definitions. This reduces boilerplate and keeps the plugin concise.
 
@@ -55,6 +58,7 @@ Stores and maintains the complete application state, including:
 2. **Command Handling**
 
 Receives user commands from the View layer, such as:
+
 - Task selection
 - Parameter changes
 - Start / stop actions
