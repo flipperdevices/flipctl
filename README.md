@@ -18,7 +18,7 @@ The user interface services. Each daemon handles a specific presentation medium:
 
 The execution service. This daemon is responsible for managing, spawning, and interfacing with underlying console utilities.
 
-![Syatem diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/silart/flipctl/ui_arch/diagrams/main.puml)
+![System diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/silart/flipctl/ui_arch/diagrams/main.puml)
 
 ## Design Pattern
 
