@@ -113,6 +113,8 @@ This stack enables seamless forward/backward navigation across the user interfac
 |--------|-------------|
 | `StateChanged(newState: string)` | Emitted whenever any part of the application state changes. Provides the complete updated state as a JSON string, allowing all subscribed Views to stay synchronized. |
 
+[State example](model-state.md)
+
 
 
 
