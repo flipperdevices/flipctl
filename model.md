@@ -9,6 +9,8 @@ The service acts as the single datasource for all View implementations (HW, Web,
 
 Plugins are defined as JSON files stored in the plugins directory. On startup, the Model scans this folder and loads every valid plugin it finds. Each plugin describes one application (console utility) and its corresponding screen.
 
+[Example of plugin](model-pugin.md)
+
 2. **Screens**
 
 - Main Screen (Menu)
@@ -84,5 +86,9 @@ After every state change, the Model emits a StateChanged D‑Bus signal. All sub
 Maintains a screen stack to support hierarchical navigation flows — for example:
 - Main menu → Task selection screen → Task detail screen → Back to previous screen.
 This stack enables seamless forward/backward navigation across the user interface.
+
+
+
+
 
 
