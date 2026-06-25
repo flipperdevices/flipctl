@@ -18,17 +18,44 @@ The user interface services. Each daemon handles a specific presentation medium:
 
 The execution service. This daemon is responsible for managing, spawning, and interfacing with underlying console utilities.
 
+![Syatem diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/silart/flipctl/ui_arch/diagrams/main.puml)
+
 ## Design Pattern
 
 The system employs the Model-View-Presenter (MVP) architectural pattern.
 
 To reduce complexity and avoid unnecessary overhead, the Model and Presenter roles are combined (merged) within the modeld service, streamlining the communication flow between the central logic and the views.
 
+## Communication Layer (D-Bus)
+
+D-Bus is selected as the inter-service communication protocol and system bus. The rationale for this choice includes:
+
+- Linux Standard – Native, well-integrated, and widely adopted across embedded and desktop Linux environments.
+- Loose Coupling – Services interact via well-defined interfaces without direct dependencies on each other’s implementations.
+- Signal-Based Architecture – Naturally supports the event-driven, asynchronous nature of the system, allowing services to broadcast state changes without blocking.
+- Embedded Suitability – Lightweight enough to run efficiently on resource-constrained embedded devices.
+
+
 ## Technology Stack
 
-- Runtime: All services are written entirely in Node.js.
-- Concurrency Model: The system leverages an asynchronous, event-driven architecture, utilizing non-blocking I/O to ensure high responsiveness and efficient resource utilization across all daemons.
+Runtime: Node.js
 
-![Syatem diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/silart/flipctl/ui_arch/diagrams/main.puml)
+All services are written entirely in Node.js and leverage an asynchronous, event-driven, non-blocking I/O model.
+Advantages:
+- Asynchronous by Design – Perfectly aligns with D‑Bus signals and the system's reactive flow.
+- Rich Ecosystem (npm) – Accelerates development with battle-tested libraries for D‑Bus bindings, process management, and logging.
+- Rapid Development – Dynamic typing and a low-boilerplate syntax enable fast prototyping and iteration.
+- Cross-Platform – Facilitates development and testing on workstations before deployment to the target device.
+- Fast Startup – Minimal boot overhead is critical for embedded systems that require quick initialization.
+
+Disadvantages:
+- Lower Performance – Interpreted execution cannot match the raw speed of compiled languages (e.g., C++, Rust) for CPU-intensive tasks.
+- Increased Memory Footprint – The V8 engine and garbage collection introduce higher RAM consumption compared to native binaries.
+
+Node.js is a pragmatic choice for our embedded Linux device. It ensures rapid time-to-market, robust process management, and reliable D‑Bus integration—making it an ideal foundation for validating the system architecture and proving the core concept.
+
+Looking ahead, the architecture is designed for evolutionary replacement. If performance bottlenecks or memory constraints arise in production, we plan to gradually migrate individual services to a more performant compiled language (e.g., C++) on a case-by-case basis, without disrupting the overall system design or inter-service communication contracts.
+
+
 
 
