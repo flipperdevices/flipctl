@@ -65,6 +65,28 @@ To support such cases, the architecture must be extended with a scripting facili
 2. Potential Overhead from Node.js
 The use of Node.js introduces inherent performance and memory overhead compared to compiled languages. While acceptable for the current scale, this may become a bottleneck under heavy load or on extremely resource‑constrained hardware. Monitoring and profiling will be essential to determine whether migration to native components is required in the future.
 
+## Future Architecture Evolution
+1. Support for Shared Object (.so) Plugins
 
+To enable direct invocation of native functions, it would be beneficial to allow users to implement their own shared object libraries (.so) with a predefined set of exported functions. A dedicated service—SoWrapper—would be introduced to load these user-provided .so files and call their functions on demand.
+
+This requires:
+- Adding a new daemon: SoWrapper.
+- Modifying the Model service to delegate native calls to SoWrapper when a plugin is of .so type.
+
+For implementation, existing Node.js packages such as ffi-napi and ref-napi can be used to provide the necessary Foreign Function Interface (FFI) bindings, allowing seamless interoperability between Node.js and native compiled code.
+
+2. Multi‑Device Support (Multiple FlipCtl Units per Linux Host)
+
+It may be useful to allow multiple FlipCtl devices to connect simultaneously to the same Linux machine. To enable this scenario, the system must introduce a unique sessionId per device.
+
+Key changes include:
+- Each FlipCtl device must generate and carry its own persistent sessionId.
+- Upon registration, the device sends its sessionId to the Model, which then stores it alongside the device’s state.
+- All Model methods and signals shall accept sessionId as the first argument, so every request and notification is explicitly scoped to a particular device.
+- Instead of maintaining a single global state, the Model will hold a dictionary of states, keyed by sessionId.
+- Views (UI services) subscribe to signals and filter incoming messages based on their own sessionId.
+
+An exception can be made for multi‑session views (e.g., an administrative web dashboard) that are designed to display screens from all connected devices.
 
 
