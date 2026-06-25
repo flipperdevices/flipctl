@@ -95,8 +95,6 @@ This stack enables seamless forward/backward navigation across the user interfac
 - **Object Path:** `/model`
 - **Interface:** `dev.flipper.Model`
 
----
-
 ### Methods
 
 | Method | Description |
@@ -108,8 +106,6 @@ This stack enables seamless forward/backward navigation across the user interfac
 | `Stop(taskId: string)` | Stops the currently running task. |
 | `SendInput(taskId: string, data: string)` | Sends arbitrary input data to the `STDIN` of an interactive (running) task. |
 | `GoBack()` | Navigates back to the previous screen in the navigation stack. |
-
----
 
 ### Signals
 
