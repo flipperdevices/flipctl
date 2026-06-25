@@ -1,0 +1,53 @@
+
+@startuml
+title AppWrapper Process Lifecycle
+
+actor "Client (Model)" as Client
+participant "AppWrapper (app_wrapperd)" as AppWrapper
+participant "Console Utility" as Util
+
+== Start request ==
+Client -> AppWrapper : Start(appId, args, env, options)
+AppWrapper -> AppWrapper : Validates arguments,\ncreates process object,\ngenerates unique object path
+
+== Process launch ==
+alt Normal process
+    AppWrapper -> Util : spawn(cmd, args, {cwd, env, stdio: ['pipe','pipe','pipe']})
+else Interactive (PTY)
+    AppWrapper -> Util : pty.spawn(cmd, args, {cwd, env, cols, rows})
+end
+
+== Set up event handlers ==
+alt Normal process
+    AppWrapper -> AppWrapper : Set stdout.on('data'),\nstderr.on('data'),\nchild.on('close'),\nchild.on('error')
+else Interactive (PTY)
+    AppWrapper -> AppWrapper : Set pty.on('data'),\npty.on('exit')
+end
+
+== Notify started ==
+AppWrapper -> Client : Started(pid)
+
+== Output forwarding loop ==
+loop While process is running
+    Util -> AppWrapper : stdout/stderr data
+    AppWrapper -> Client : Output(stream, data)
+end
+
+== Command handling ==
+Client -> AppWrapper : Stop(path)
+AppWrapper -> Util : Sends signal (SIGTERM)\nor kills process
+
+Client -> AppWrapper : SendInput(path, data)
+AppWrapper -> Util : Writes to stdin (child.stdin.write()\nor pty.write())
+
+== Process termination ==
+Util -> AppWrapper : close/exit event (code, signal)
+AppWrapper -> Client : Exited(code, signal)
+AppWrapper -> AppWrapper : Keeps process object active\nfor a while, then removes it
+
+== Error handling ==
+Util -> AppWrapper : error event
+AppWrapper -> Client : Error(message)
+
+@enduml
+

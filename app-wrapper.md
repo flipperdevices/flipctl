@@ -61,4 +61,46 @@ Each running process exposes a D‑Bus object at `/appwrap/process/<id>` that em
 - Each started process gets a unique object path, and the client can subscribe to signals on that object to receive output, termination, and error notifications.
 - The `AppWrapper` maintains a registry of all active processes, which can be retrieved via the `List` method.
 
+## Process Lifecycle (from AppWrapper Perspective)
+
+1. **Receive Start Request**
+   - Validate arguments.
+   - Create a process object and generate a unique object path.
+
+2. **Launch Child Process**
+   - **Regular:** `spawn(cmd, args, { cwd, env, stdio: ['pipe', 'pipe', 'pipe'] })`
+   - **Interactive:** `pty.spawn(cmd, args, { cwd, env, cols, rows })`
+
+3. **Set Up Event Handlers**
+   - For regular processes:
+     - `stdout.on('data')`, `stderr.on('data')`
+     - `child.on('close')`, `child.on('error')`
+   - For PTY‑based processes:
+     - `pty.on('data')`, `pty.on('exit')`
+
+4. **Emit `Started` Signal**
+   - Send the system PID to the client.
+
+5. **Stream Redirection**
+   - All data from `stdout` and `stderr` is converted into `Output` signals and forwarded to the client (Model).
+
+6. **Handle Commands**
+   - **`Stop`** – Sends a signal (default `SIGTERM`) to the process; can force‑terminate if needed.
+   - **`SendInput`** – Writes data to `STDIN` (via `child.stdin.write()` for regular processes, or `pty.write()` for interactive ones).
+
+7. **Process Termination**
+   - Upon receiving `close` or `exit` events, the service emits an `Exited` signal with the exit code and/or signal number.
+   - The process object remains alive for a short grace period (to ensure delivery of final signals), then is removed from memory.
+
+8. **Error Handling**
+   - On launch or runtime errors, an `Error` signal is emitted.
+
+### Integration with the Model
+
+- The `Model` calls `Start` with parameters derived from plugin definitions.
+- The `Model` subscribes to `Output`, `Exited`, and `Error` signals for each process.
+- The `Model` may use `SendInput` for interactive utilities (e.g., sending commands to a debugger).
+- The `Model` is responsible for storing object paths and managing the overall lifecycle of processes.
+
+![AppWrapper diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/silart/flipctl/ui_arch/diagrams/app-wrapper.puml)
 
