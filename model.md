@@ -116,6 +116,46 @@ This stack enables seamless forward/backward navigation across the user interfac
 [State example](model-state.md)
 
 
+## Lifecycle of Interaction
 
+### 1. Initialization
+- The `Model` loads all JSON plugins from the `plugins` directory and generates the main menu screen plus individual task screens for each plugin.
+- The initial **State** contains all screens with their controls and default values.
+- The first `StateChanged` signal is emitted to notify all Views.
 
+### 2. Navigation
+- The user (via a View) selects a task from the menu.
+- The `Model` switches `currentScreenId` to the corresponding task screen and pushes it onto the navigation stack.
+- When the user presses **Back**, the `Model` pops the previous screen from the stack and restores it.
+
+### 3. Parameter Changes
+- A View calls `SetParameter(taskId, paramId, value)`.
+- The `Model` updates the stored value in `appParams[taskId][paramId]` and broadcasts the updated state.
+
+### 4. Task Execution
+- A View calls `Execute(taskId)`.
+- The `Model` builds the command‑line arguments by substituting the current parameter values into the `args` template.
+- It invokes `AppWrapper.Start(appId, args, env, options)` and stores the returned process identifier.
+- The task status is set to `"running"`, and controls are updated (e.g., enabling a **Stop** button).
+- A `StateChanged` signal is emitted.
+
+### 5. Output Processing
+- Upon receiving an `Output` signal from the `AppWrapper`, the `Model` applies the parsing rules sequentially:
+  - For each line (or chunk), it checks for matches against defined regular expressions.
+  - When a match is found, it updates the `value` of the specified target control (or appends a row to a table if `multiple` is set).
+- The `Model` may also accumulate the full output in a dedicated field (e.g., for logs).
+- A `StateChanged` signal is emitted after every update.
+
+### 6. Termination / Error
+- When an `Exited` or `Error` signal is received from `AppWrapper`, the `Model`:
+  - Updates the task status.
+  - Stops any running timers.
+  - Refreshes relevant controls (e.g., result fields, buttons).
+- The final state is broadcast via `StateChanged`.
+
+### 7. Interactive Input
+- For tasks marked with `interactive: true`, a View may call `SendInput(taskId, data)`.
+- The `Model` forwards this data to the `AppWrapper`, which writes it to the `STDIN` of the running process.
+
+![Model diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/silart/flipctl/ui_arch/diagrams/model.puml)
 
