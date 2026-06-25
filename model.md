@@ -87,6 +87,35 @@ Maintains a screen stack to support hierarchical navigation flows — for exampl
 - Main menu → Task selection screen → Task detail screen → Back to previous screen.
 This stack enables seamless forward/backward navigation across the user interface.
 
+## D‑Bus Interface
+
+### Service Identification
+
+- **Service Name:** `dev.flipper.model`
+- **Object Path:** `/model`
+- **Interface:** `dev.flipper.Model`
+
+---
+
+### Methods
+
+| Method | Description |
+|--------|-------------|
+| `GetState()` | Returns the current full application state as a serialized JSON string. |
+| `SelectScreen(screenId: string)` | Switches the UI to the specified screen (identified by its `screenId`). |
+| `SetParameter(taskId: string, paramId: string, value: variant)` | Sets the value of a specific parameter for the given task. |
+| `Execute(taskId: string)` | Launches the specified task with the currently configured parameters. |
+| `Stop(taskId: string)` | Stops the currently running task. |
+| `SendInput(taskId: string, data: string)` | Sends arbitrary input data to the `STDIN` of an interactive (running) task. |
+| `GoBack()` | Navigates back to the previous screen in the navigation stack. |
+
+---
+
+### Signals
+
+| Signal | Description |
+|--------|-------------|
+| `StateChanged(newState: string)` | Emitted whenever any part of the application state changes. Provides the complete updated state as a JSON string, allowing all subscribed Views to stay synchronized. |
 
 
 
