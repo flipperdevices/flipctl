@@ -70,4 +70,56 @@ Despite different technical stacks, all Views adhere to the unified protocol and
 
 ![View diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/silart/flipctl/ui_arch/diagrams/view.puml)
 
+## HW View Implementation Considerations
+
+The HW View consists of two parts: the microcontroller firmware and the client-side Node.js service.
+
+Two approaches are possible:
+
+1. **Rendering on the Node.js side** – The Node.js service renders the graphical interface (e.g., using web technologies) and sends complete frames to the device via SPI or USB (depending on the connection). The microcontroller simply displays the received frames on the screen.
+
+2. **Rendering on the microcontroller** – All graphical controls are implemented inside the microcontroller firmware. The state of the interface is sent as a lightweight JSON payload, and the microcontroller handles all rendering based on that data.
+
+### Comparison of Approaches
+
+| Aspect | Approach 1 (Frame-based) | Approach 2 (JSON-based) |
+|--------|--------------------------|--------------------------|
+| **Implementation complexity** | Low – rendering is handled on the Node.js side | Higher – requires implementing controls and rendering logic on the microcontroller |
+| **Data bandwidth** | High – raw frame data requires a high-speed interface (SPI) | Low – lightweight JSON can be transmitted over UART |
+| **Hardware flexibility** | SPI is consumed for display, limiting user expansion | UART or other low‑bandwidth interfaces remain available for user peripherals |
+| **Current status** | Already implemented | Proposed enhancement |
+
+### Approach 1: Frame‑Based Rendering (Current Implementation)
+
+**Advantages:**
+- Simplicity of implementation – rendering is delegated to the Node.js service.
+- Leverages existing web‑based rendering capabilities.
+
+**Disadvantages:**
+- High data throughput – raw frame data demands a high‑speed SPI interface.
+- The SPI interface is occupied for display purposes, which could otherwise be used by the user for connecting custom hardware.
+
+### Approach 2: JSON‑Based Rendering (Proposed)
+
+**Advantages:**
+- Low bandwidth – lightweight JSON can be sent over UART.
+- Frees up the SPI interface for user‑connected peripherals.
+- Better suited for resource‑constrained communication links.
+
+**Disadvantages:**
+- Requires more development effort on the microcontroller side – all control logic and rendering must be implemented in firmware.
+
+For implementing the second approach, the following libraries can be utilised:
+
+- **TinyGL** – A lightweight library for rendering basic graphical elements on LCD displays in embedded systems[reference:0]. It supports canvas operations with frame buffer pixels and can work with or without dedicated hardware[reference:1].
+- **FrameBuffer** – Designed to manage framebuffers for low‑resolution displays (e.g., 128×64) commonly used in embedded systems[reference:2].
+
+These libraries are available at:
+- https://gitlab.com/silart-pub/embedded/tinygl
+- https://gitlab.com/silart-pub/embedded/framebuffer
+
+### Summary
+
+The current frame‑based approach provides a quick path to implementation but consumes significant bandwidth and occupies the SPI interface. Moving to a JSON‑based rendering model would reduce communication overhead, free up hardware interfaces, and improve the overall flexibility of the system—though it requires additional firmware development. The choice depends on the balance between development effort and long‑term hardware usability.
+
 
