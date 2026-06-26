@@ -111,8 +111,8 @@ Two approaches are possible:
 
 For implementing the second approach, the following libraries can be utilised:
 
-- **TinyGL** – A lightweight library for rendering basic graphical elements on LCD displays in embedded systems[reference:0]. It supports canvas operations with frame buffer pixels and can work with or without dedicated hardware[reference:1].
-- **FrameBuffer** – Designed to manage framebuffers for low‑resolution displays (e.g., 128×64) commonly used in embedded systems[reference:2].
+- **TinyGL** – A lightweight library for rendering basic graphical elements on LCD displays in embedded systems. It supports canvas operations with frame buffer pixels and can work with or without dedicated hardware.
+- **FrameBuffer** – Designed to manage framebuffers for low‑resolution displays (e.g., 128×64) commonly used in embedded systems.
 
 These libraries are available at:
 - https://gitlab.com/silart-pub/embedded/tinygl
