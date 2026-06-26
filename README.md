@@ -7,7 +7,7 @@ The UI system is built upon a microservice architecture. It comprises three prim
 1. [Model](model.md) (modeld)
 The central orchestration service. Acts as the brain of the system, responsible for managing core business logic, state, and coordinating requests between the view layer and the system layer.
 
-2. View (hw_viewd, web_viewd, tui_viewd)
+2. [View](view.md) (hw_viewd, web_viewd, tui_viewd)
 The user interface services. Each daemon handles a specific presentation medium:
 
 - hw_viewd – Hardware/embedded UI rendering.
