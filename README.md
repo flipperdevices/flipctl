@@ -1,92 +1,102 @@
 # Architecture Overview
 
-The UI system is built upon a microservice architecture. It comprises three primary logical layers, each implemented as standalone daemons (services) that communicate via D‑Bus.
+The UI system is built upon a **microservice architecture**. It comprises three primary logical layers, each implemented as standalone daemons (services) that communicate via **D‑Bus**.
+
+---
 
 ## Core Components
 
-1. [Model](model.md) (modeld)
-The central orchestration service. Acts as the brain of the system, responsible for managing core business logic, state, and coordinating requests between the view layer and the system layer.
+1. **[Model](model.md) (`modeld`)**
+   The central orchestration service. Acts as the brain of the system, responsible for managing core business logic, state, and coordinating requests between the view layer and the system layer.
 
-2. [View](view.md) (hw_viewd, web_viewd, tui_viewd)
-The user interface services. Each daemon handles a specific presentation medium:
+2. **[View](view.md) (`hw_viewd`, `web_viewd`, `tui_viewd`)**
+   The user interface services. Each daemon handles a specific presentation medium:
+   - `hw_viewd` – Hardware/embedded UI rendering.
+   - `web_viewd` – Web‑based interface rendering.
+   - `tui_viewd` – Terminal‑based (TUI) interface rendering.
 
-- hw_viewd – Hardware/embedded UI rendering.
-- web_viewd – Web-based interface rendering.
-- tui_viewd – Terminal-based (TUI) interface rendering.
-
-3. [AppWrapper](app-wrapper.md) (app_wrapperd)
-
-The execution service. This daemon is responsible for managing, spawning, and interfacing with underlying console utilities.
+3. **[AppWrapper](app-wrapper.md) (`app_wrapperd`)**
+   The execution service. This daemon is responsible for managing, spawning, and interfacing with underlying console utilities.
 
 ![System diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/silart/flipctl/ui_arch/diagrams/main.puml)
 
+---
+
 ## Design Pattern
 
-The system employs the Model-View-Presenter (MVP) architectural pattern.
+The system employs the **Model‑View‑Presenter (MVP)** architectural pattern.
+To reduce complexity and avoid unnecessary overhead, the **Model** and **Presenter** roles are combined (merged) within the `modeld` service, streamlining the communication flow between the central logic and the views.
 
-To reduce complexity and avoid unnecessary overhead, the Model and Presenter roles are combined (merged) within the modeld service, streamlining the communication flow between the central logic and the views.
+---
 
-## Communication Layer (D-Bus)
+## Communication Layer (D‑Bus)
 
-D-Bus is selected as the inter-service communication protocol and system bus. The rationale for this choice includes:
+**D‑Bus** is selected as the inter‑service communication protocol and system bus. The rationale for this choice includes:
 
-- Linux Standard – Native, well-integrated, and widely adopted across embedded and desktop Linux environments.
-- Loose Coupling – Services interact via well-defined interfaces without direct dependencies on each other’s implementations.
-- Signal-Based Architecture – Naturally supports the event-driven, asynchronous nature of the system, allowing services to broadcast state changes without blocking.
-- Embedded Suitability – Lightweight enough to run efficiently on resource-constrained embedded devices.
+- **Linux Standard** – Native, well‑integrated, and widely adopted across embedded and desktop Linux environments.
+- **Loose Coupling** – Services interact via well‑defined interfaces without direct dependencies on each other’s implementations.
+- **Signal‑Based Architecture** – Naturally supports the event‑driven, asynchronous nature of the system, allowing services to broadcast state changes without blocking.
+- **Embedded Suitability** – Lightweight enough to run efficiently on resource‑constrained embedded devices.
 
+---
 
 ## Technology Stack
 
-Runtime: Node.js
+### Runtime: Node.js
 
-All services are written entirely in Node.js and leverage an asynchronous, event-driven, non-blocking I/O model.
-Advantages:
-- Asynchronous by Design – Perfectly aligns with D‑Bus signals and the system's reactive flow.
-- Rich Ecosystem (npm) – Accelerates development with battle-tested libraries for D‑Bus bindings, process management, and logging.
-- Rapid Development – Dynamic typing and a low-boilerplate syntax enable fast prototyping and iteration.
-- Cross-Platform – Facilitates development and testing on workstations before deployment to the target device.
-- Fast Startup – Minimal boot overhead is critical for embedded systems that require quick initialization.
+All services are written entirely in **Node.js** and leverage an asynchronous, event‑driven, non‑blocking I/O model.
 
-Disadvantages:
-- Lower Performance – Interpreted execution cannot match the raw speed of compiled languages (e.g., C++, Rust) for CPU-intensive tasks.
-- Increased Memory Footprint – The V8 engine and garbage collection introduce higher RAM consumption compared to native binaries.
+**Advantages:**
+- **Asynchronous by Design** – Perfectly aligns with D‑Bus signals and the system's reactive flow.
+- **Rich Ecosystem (npm)** – Accelerates development with battle‑tested libraries for D‑Bus bindings, process management, and logging.
+- **Rapid Development** – Dynamic typing and a low‑boilerplate syntax enable fast prototyping and iteration.
+- **Cross‑Platform** – Facilitates development and testing on workstations before deployment to the target device.
+- **Fast Startup** – Minimal boot overhead is critical for embedded systems that require quick initialization.
 
-Node.js is a pragmatic choice for our embedded Linux device. It ensures rapid time-to-market, robust process management, and reliable D‑Bus integration—making it an ideal foundation for validating the system architecture and proving the core concept.
+**Disadvantages:**
+- **Lower Performance** – Interpreted execution cannot match the raw speed of compiled languages (e.g., C++, Rust) for CPU‑intensive tasks.
+- **Increased Memory Footprint** – The V8 engine and garbage collection introduce higher RAM consumption compared to native binaries.
 
-Looking ahead, the architecture is designed for evolutionary replacement. If performance bottlenecks or memory constraints arise in production, we plan to gradually migrate individual services to a more performant compiled language (e.g., C++) on a case-by-case basis, without disrupting the overall system design or inter-service communication contracts.
+### Strategic Outlook
+
+Node.js is a **pragmatic choice** for our embedded Linux device. It ensures rapid time‑to‑market, robust process management, and reliable D‑Bus integration—making it an ideal foundation for validating the system architecture and proving the core concept.
+
+Looking ahead, the architecture is designed for **evolutionary replacement**. If performance bottlenecks or memory constraints arise in production, we plan to **gradually migrate individual services** to a more performant compiled language (e.g., C++) on a case‑by‑case basis, without disrupting the overall system design or inter‑service communication contracts.
+
+---
 
 ## Architectural Limitations
 
-1. Plugin Implementation via JSON Descriptions
-Currently, plugins are defined using JSON schemas. This approach works well for many console utilities that produce plain, simple text output. However, it falls short when dealing with complex, interactive, or rich terminal output—such as that generated by tools like htop, btop, gdb, lldb, or any TUI‑based applications.
-To support such cases, the architecture must be extended with a scripting facility. The user would provide a custom script (of a predefined format) that reads the raw output from the utility, processes it, and emits a simplified, structured text representation suitable for forwarding to the View layer.
+1. **Plugin Implementation via JSON Descriptions**
+   Currently, plugins are defined using JSON schemas. This approach works well for many console utilities that produce plain, simple text output. However, it falls short when dealing with complex, interactive, or rich terminal output—such as that generated by tools like `htop`, `btop`, `gdb`, `lldb`, or any TUI‑based applications.
+   To support such cases, the architecture must be extended with a **scripting facility**. The user would provide a custom script (of a predefined format) that reads the raw output from the utility, processes it, and emits a simplified, structured text representation suitable for forwarding to the View layer.
 
-2. Potential Overhead from Node.js
-The use of Node.js introduces inherent performance and memory overhead compared to compiled languages. While acceptable for the current scale, this may become a bottleneck under heavy load or on extremely resource‑constrained hardware. Monitoring and profiling will be essential to determine whether migration to native components is required in the future.
+2. **Potential Overhead from Node.js**
+   The use of Node.js introduces inherent performance and memory overhead compared to compiled languages. While acceptable for the current scale, this may become a bottleneck under heavy load or on extremely resource‑constrained hardware. Monitoring and profiling will be essential to determine whether migration to native components is required in the future.
+
+---
 
 ## Future Architecture Evolution
-1. Support for Shared Object (.so) Plugins
 
-To enable direct invocation of native functions, it would be beneficial to allow users to implement their own shared object libraries (.so) with a predefined set of exported functions. A dedicated service—SoWrapper—would be introduced to load these user-provided .so files and call their functions on demand.
+### 1. Support for Shared Object (`.so`) Plugins
+
+To enable direct invocation of native functions, it would be beneficial to allow users to implement their own **shared object libraries** (`.so`) with a predefined set of exported functions. A dedicated service—**`SoWrapper`**—would be introduced to load these user‑provided `.so` files and call their functions on demand.
 
 This requires:
-- Adding a new daemon: SoWrapper.
-- Modifying the Model service to delegate native calls to SoWrapper when a plugin is of .so type.
+- Adding a new daemon: `SoWrapper`.
+- Modifying the `Model` service to delegate native calls to `SoWrapper` when a plugin is of `.so` type.
 
-For implementation, existing Node.js packages such as ffi-napi and ref-napi can be used to provide the necessary Foreign Function Interface (FFI) bindings, allowing seamless interoperability between Node.js and native compiled code.
+For implementation, existing Node.js packages such as **`ffi-napi`** and **`ref-napi`** can be used to provide the necessary Foreign Function Interface (FFI) bindings, allowing seamless interoperability between Node.js and native compiled code.
 
-2. Multi‑Device Support (Multiple FlipCtl Units per Linux Host)
+### 2. Multi‑Device Support (Multiple FlipCtl Units per Linux Host)
 
-It may be useful to allow multiple FlipCtl devices to connect simultaneously to the same Linux machine. To enable this scenario, the system must introduce a unique sessionId per device.
+It may be useful to allow **multiple FlipCtl devices** to connect simultaneously to the same Linux machine. To enable this scenario, the system must introduce a unique **`sessionId`** per device.
 
 Key changes include:
-- Each FlipCtl device must generate and carry its own persistent sessionId.
-- Upon registration, the device sends its sessionId to the Model, which then stores it alongside the device’s state.
-- All Model methods and signals shall accept sessionId as the first argument, so every request and notification is explicitly scoped to a particular device.
-- Instead of maintaining a single global state, the Model will hold a dictionary of states, keyed by sessionId.
-- Views (UI services) subscribe to signals and filter incoming messages based on their own sessionId.
+- Each FlipCtl device must generate and carry its own persistent `sessionId`.
+- Upon registration, the device sends its `sessionId` to the `Model`, which then stores it alongside the device’s state.
+- All `Model` methods and signals shall accept `sessionId` as the **first argument**, so every request and notification is explicitly scoped to a particular device.
+- Instead of maintaining a single global state, the `Model` will hold a **dictionary of states**, keyed by `sessionId`.
+- Views (UI services) subscribe to signals and filter incoming messages based on their own `sessionId`.
 
-An exception can be made for multi‑session views (e.g., an administrative web dashboard) that are designed to display screens from all connected devices.
-
-
+An exception can be made for **multi‑session views** (e.g., an administrative web dashboard) that are designed to display screens from all connected devices.
