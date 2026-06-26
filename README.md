@@ -29,7 +29,7 @@ To reduce complexity and avoid unnecessary overhead, the **Model** and **Present
 
 ---
 
-## Communication Layer (D‑Bus)
+## Communication Bus
 
 **D‑Bus** is selected as the inter‑service communication protocol and system bus. The rationale for this choice includes:
 
