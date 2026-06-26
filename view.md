@@ -68,4 +68,6 @@ While all Views follow the same protocol, each implementation has its own specif
 
 Despite different technical stacks, all Views adhere to the unified protocol and contain no business logic—they only transform data into UI elements and forward user commands to the Model.
 
+![View diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/silart/flipctl/ui_arch/diagrams/view.puml)
+
 
