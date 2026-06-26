@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body {
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: sans-serif;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .menu {
+    width: 400px;
+  }
+  h2 {
+    font-size: 13px;
+    color: #8b949e;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    margin-bottom: 8px;
+    outline: none;
+    border-left: 4px solid transparent;
+  }
+  .item.focused {
+    background: #1c2128;
+    border-left-color: #58a6ff;
+  }
+  .icon { font-size: 18px; width: 28px; text-align: center; color: #8b949e; }
+  .item.focused .icon { color: #58a6ff; }
+  .label { font-size: 16px; font-weight: 500; }
+  .sub   { font-size: 12px; color: #8b949e; margin-top: 2px; }
+
+  .status {
+    margin-top: 28px;
+    text-align: center;
+    font-size: 13px;
+    color: #8b949e;
+    min-height: 20px;
+  }
+  .status span { color: #58a6ff; }
+</style>
+</head>
+<body>
+<div class="menu">
+  <h2>servo-remote</h2>
+
+  <div class="item focused" tabindex="0" data-label="Главная">
+    <div class="icon">&gt;</div>
+    <div>
+      <div class="label">Главная</div>
+      <div class="sub">Обзор приложения</div>
+    </div>
+  </div>
+
+  <div class="item" tabindex="0" data-label="Настройки">
+    <div class="icon">-</div>
+    <div>
+      <div class="label">Настройки</div>
+      <div class="sub">Параметры системы</div>
+    </div>
+  </div>
+
+  <div class="item" tabindex="0" data-label="Медиа">
+    <div class="icon">-</div>
+    <div>
+      <div class="label">Медиа</div>
+      <div class="sub">Фото, видео, музыка</div>
+    </div>
+  </div>
+
+  <div class="item" tabindex="0" data-label="Сеть">
+    <div class="icon">-</div>
+    <div>
+      <div class="label">Сеть</div>
+      <div class="sub">Wi-Fi и соединения</div>
+    </div>
+  </div>
+
+  <div class="item" tabindex="0" data-label="О системе">
+    <div class="icon">-</div>
+    <div>
+      <div class="label">О системе</div>
+      <div class="sub">Версия, лицензии</div>
+    </div>
+  </div>
+
+  <div class="status" id="status">Используй ▲▼ для навигации, Enter для выбора</div>
+</div>
+
+<script>
+  const items = Array.from(document.querySelectorAll('.item'));
+  const status = document.getElementById('status');
+  let current = 0;
+
+  function focus(idx) {
+    items[current].classList.remove('focused');
+    current = (idx + items.length) % items.length;
+    items[current].classList.add('focused');
+    status.innerHTML = '';
+  }
+
+  function select() {
+    const label = items[current].dataset.label;
+    status.innerHTML = 'Выбрано: <span>' + label + '</span>';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown')  { e.preventDefault(); focus(current + 1); }
+    if (e.key === 'ArrowUp')    { e.preventDefault(); focus(current - 1); }
+    if (e.key === 'Enter')      { e.preventDefault(); select(); }
+  });
+
+  // Drive continuous repaints so stream always has fresh frames for new subscribers
+  const _t = document.createElement('span');
+  _t.style.cssText = 'position:fixed;opacity:0;font-size:1px';
+  document.body.appendChild(_t);
+  // rAF doesn't work in WPE headless (no vsync) — use setInterval instead
+  setInterval(() => { _t.textContent = Date.now(); }, 33);
+</script>
+</body>
+</html>

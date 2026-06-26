@@ -1,0 +1,24 @@
+[package]
+name = "servo-remote"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+servo        = "0.3"
+url          = "2"
+euclid       = "0.22"
+dpi          = "0.1"
+axum         = { version = "0.7", features = ["ws"] }
+tokio        = { version = "1", features = ["full"] }
+clap         = { version = "4", features = ["derive"] }
+image        = { version = "0.25", default-features = false, features = ["png"] }
+serde        = { version = "1", features = ["derive"] }
+bytes        = "1"
+async-stream = "0.3"
+
+[profile.release]
+strip         = true
+lto           = true
+codegen-units = 1
+panic         = "abort"
+opt-level     = "z"

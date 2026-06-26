@@ -1,0 +1,17 @@
+[package]
+name    = "wpe-remote"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-stream = "0.3"
+axum         = { version = "0.7", features = ["ws"] }
+bytes        = "1"
+clap         = { version = "4", features = ["derive"] }
+glib         = "0.18"
+image        = { version = "0.25", default-features = false, features = ["png"] }
+serde        = { version = "1", features = ["derive"] }
+tokio        = { version = "1", features = ["full"] }
+
+[build-dependencies]
+pkg-config = "0.3"

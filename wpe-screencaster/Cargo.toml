@@ -1,0 +1,21 @@
+[package]
+name    = "wpe-screencaster"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "wpe-screencaster"
+path = "src/main.rs"
+
+[dependencies]
+async-stream = "0.3"
+axum         = "0.7"
+bytes        = "1"
+clap         = { version = "4", features = ["derive"] }
+glib         = "0.18"
+gobject-sys  = "0.18"
+image        = { version = "0.25", default-features = false, features = ["jpeg"] }
+tokio        = { version = "1", features = ["full"] }
+
+[build-dependencies]
+pkg-config = "0.3"

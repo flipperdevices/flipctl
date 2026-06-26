@@ -1,0 +1,7 @@
+{
+  "id": "ifconfig",
+  "name": "ifconfig",
+  "icon": "wifi",
+  "version": "0.1.0",
+  "description": "Network interface viewer"
+}

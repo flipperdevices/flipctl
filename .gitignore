@@ -1,0 +1,19 @@
+apps
+wails-test
+
+# Rust build artifacts
+target/
+
+# Node.js / frontend
+node_modules/
+build/
+dist/
+
+# SvelteKit
+.svelte-kit/
+
+# IDE
+.idea/
+
+# OS
+.DS_Store

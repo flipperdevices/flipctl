@@ -1,0 +1,4 @@
+# Fixes WebKitGTK Protocol error 71 on Wayland sessions.
+# These vars are ignored on Windows/macOS, so they're safe to keep here.
+[env]
+WEBKIT_DISABLE_DMABUF_RENDERER = "1"

@@ -1,0 +1,7 @@
+{
+  "id": "main",
+  "name": "flipctl",
+  "icon": "apps",
+  "version": "0.1.0",
+  "description": "FlipCTL main interface"
+}

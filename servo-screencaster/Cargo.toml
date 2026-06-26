@@ -1,0 +1,23 @@
+[package]
+name = "servo-screencaster"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+servo   = "0.3"
+url     = "2"
+image   = { version = "0.25", default-features = false, features = ["jpeg"] }
+euclid  = "0.22"
+dpi     = "0.1"
+axum    = "0.7"
+tokio   = { version = "1", features = ["full"] }
+clap    = { version = "4", features = ["derive"] }
+bytes        = "1"
+async-stream = "0.3"
+
+[profile.release]
+strip        = true   # убирает символы (~20% экономии)
+lto          = true   # Link-Time Optimization: убирает мёртвый код между крейтами
+codegen-units = 1     # один блок кодогенерации — лучше оптимизация
+panic        = "abort" # убирает unwinding machinery
+opt-level    = "z"    # оптимизация под размер вместо скорости

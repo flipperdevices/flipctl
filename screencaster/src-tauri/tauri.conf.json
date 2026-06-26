@@ -1,0 +1,12 @@
+{
+  "productName": "screencaster",
+  "version":     "0.1.0",
+  "identifier":  "dev.screencaster.app",
+  "build": {
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "security": { "csp": null },
+    "windows":  []
+  }
+}

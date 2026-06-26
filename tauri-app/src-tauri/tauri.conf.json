@@ -1,0 +1,38 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "flipctl",
+  "version": "0.1.0",
+  "identifier": "com.flipctl.dev",
+  "build": {
+    "beforeDevCommand": "",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "http://localhost:5173"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "flipctl",
+        "width": 960,
+        "height": 640,
+        "minWidth": 480,
+        "minHeight": 360,
+        "resizable": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}
