@@ -111,63 +111,82 @@ Plugin example:
 ## Plugin Schema
 
 ### Identification
-- **`id`** (string, unique) – Task identifier.
-- **`title`** (string) – Display name shown in the menu.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| **`id`** | `string` (unique) | Task identifier. Must be unique across all plugins. |
+| **`title`** | `string` | Display name shown in the main menu. |
+| **`description`** | `string` | (Optional) Brief description of the task. |
+
+---
 
 ### Executable Command
-- **`command`** (string) – Path to the executable file.
-- **`args`** (array of strings) – Command‑line arguments. Supports parameter substitution using placeholders like `{paramName}`.
-
-### User Parameters
-- **`params`** (array of objects) – Describes the parameters that the user can configure via the UI.
-
-Each parameter object has the following fields:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | string | Parameter identifier. |
-| `label` | string | Human‑readable label. |
-| `type` | string | Input type: `"input"`, `"select"`, `"checkbox"`, `"number"`. |
-| `default` | varies | Default value for the parameter. |
-| `options` | array | (For `select` type) Array of strings or objects `{label, value}`. |
-| `required` | boolean | Whether the parameter is mandatory. |
+| **`command`** | `string` | Absolute or relative path to the executable file. |
+| **`args`** | `array` of `string` | Command‑line arguments. Supports parameter substitution using placeholders like `{paramName}` – these are replaced with user‑provided values at runtime. |
 
-### Controls (UI Elements)
-- **`controls`** (array of objects) – Defines the UI elements displayed on the task screen.
+---
 
-Each control object includes:
+### User Parameters (`params`)
+
+An **array of objects** that define the configurable parameters displayed in the UI. Each object has the following properties:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | string | Unique identifier within the screen. |
-| `type` | string | Control type: `"label"`, `"field"`, `"button"`, `"input"`, `"select"`, `"progress"`, `"table"`. |
-| `label` | string | (Optional) Display label. |
-| `value` | varies | (For `field`) Initial value. |
-| `action` | string | (For buttons) Action to perform: `"execute"`, `"stop"`, `"sendInput"`, `"refresh"`, etc. |
+| **`id`** | `string` | Unique parameter identifier (used in `args` placeholders). |
+| **`label`** | `string` | Human‑readable label shown next to the input field. |
+| **`type`** | `string` | Input type. Supported values: `"input"`, `"select"`, `"checkbox"`, `"number"`. |
+| **`default`** | `varies` | Default value for the parameter. |
+| **`options`** | `array` | (Required for `select` type) Array of strings or objects `{label, value}`. |
+| **`required`** | `boolean` | Whether the parameter must be filled before execution. |
+| **`min`** / **`max`** | `number` | (Optional, for `number` type) Range constraints. |
 
-### Output Parsing Rules
-- **`parsing`** (object) – Contains an array of `rules`.
+---
 
-Each rule has the following properties:
+### Controls (`controls`)
+
+An **array of objects** defining the UI elements (controls) displayed on the task screen. Each control object includes:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `regex` | string | Regular expression pattern (as a string). |
-| `target` | string | ID of the control where the matched result will be placed. |
-| `format` | string | (Optional) Template for formatting, e.g., `"{{match}} ms"`. |
-| `stream` | string | Which stream to process: `"stdout"`, `"stderr"`, or both (default). |
-| `multiple` | boolean | If `true`, accumulates all matches (useful for tables). |
+| **`id`** | `string` | Unique identifier within the screen. |
+| **`type`** | `string` | Control type: `"label"`, `"field"`, `"button"`, `"input"`, `"select"`, `"progress"`, `"table"`. |
+| **`label`** | `string` | (Optional) Display label for the control. |
+| **`value`** | `varies` | Initial value (for `field`, `progress`, `table`). |
+| **`action`** | `string` | (For buttons) Action to perform: `"execute"`, `"stop"`, `"sendInput"`, `"refresh"`, etc. |
+| **`visibleWhen`** | `object` | (Optional) Condition to show/hide the control, e.g., `{ "paramId": "status", "value": "running" }`. |
+| **`columns`** | `array` | (For `table`) Column headers. |
+
+---
+
+### Output Parsing Rules (`parsing.rules`)
+
+An **array of rules** applied to the output streams of the running process. Each rule has the following properties:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| **`regex`** | `string` | Regular expression pattern (as a string) to match against output lines. |
+| **`target`** | `string` | `id` of the control where the matched result will be placed. |
+| **`format`** | `string` | (Optional) Template for formatting the captured groups, e.g., `"{{match}} ms"`. Use `{{match}}` for the full match or `{{1}}`, `{{2}}` for capture groups. |
+| **`stream`** | `string` | Which stream to process: `"stdout"`, `"stderr"`, or both (if omitted, both are processed). |
+| **`multiple`** | `boolean` | If `true`, all matches are accumulated (useful for tables). If `false`, only the last match is stored. |
+
+---
 
 ### Additional Execution Settings
 
+These top‑level fields control the runtime behaviour of the process:
+
 | Field | Type | Description |
 |-------|------|-------------|
-| `cwd` | string | Working directory for the process. |
-| `env` | object | Environment variables to set. |
-| `timeout` | number | Maximum execution time in seconds (process is terminated after this). |
-| `interactive` | boolean | Whether to use a pseudo‑terminal (PTY). |
-| `stopSignal` | string | Signal to send when stopping the process (default: `"SIGTERM"`). |
-| `autoRestart` | boolean | Whether to automatically restart the process after it exits (e.g., for daemons). |
-| `restartDelay` | number | Delay before restarting, in seconds. |
+| **`cwd`** | `string` | Working directory for the process. |
+| **`env`** | `object` | Environment variables to set (key‑value pairs). |
+| **`timeout`** | `number` | Maximum execution time in seconds. The process is terminated after this period. |
+| **`interactive`** | `boolean` | If `true`, uses a pseudo‑terminal (PTY) via `node-pty` for interactive utilities. |
+| **`stopSignal`** | `string` | Signal to send when stopping the process (default: `"SIGTERM"`). |
+| **`autoRestart`** | `boolean` | Whether to automatically restart the process after it exits (useful for daemon‑like tasks). |
+| **`restartDelay`** | `number` | Delay (in seconds) before restarting when `autoRestart` is `true`. |
 
 
