@@ -1,20 +1,23 @@
+# AppWrapper Service (`app_wrapperd`)
 
-## AppWrapper Service (`app_wrapperd`)
+`AppWrapper` is a service responsible for launching, managing, and monitoring arbitrary console utilities and applications. It acts as the execution engine for the `Model` (`modeld`), providing a unified interface for handling child processes regardless of their nature—whether they are one‑off tasks, long‑running daemons, or interactive sessions. The service is **fully asynchronous** and built upon Node.js' event‑driven model.
 
-`AppWrapper` is a service responsible for launching, managing, and monitoring arbitrary console utilities and applications. It acts as the execution engine for the `Model` (`modeld`), providing a unified interface for handling child processes regardless of their nature—whether they are one‑off tasks, long‑running daemons, or interactive sessions. The service is fully asynchronous and built upon Node.js' event‑driven model.
+---
 
 ## Key Concepts
 
 ### Process
-- Each running instance of an application is identified by a unique D‑Bus object path (e.g., `/appwrap/process/<id>`).
+- Each running instance of an application is identified by a **unique D‑Bus object path** (e.g., `/appwrap/process/<id>`).
 - For each process, a separate D‑Bus object is created that implements the `dev.flipper.Process` interface. Through this interface, the client (Model) can receive signals about output and termination.
-- Processes can be of two types:
-  - **Regular**: launched via `child_process.spawn`, with I/O through standard streams.
-  - **Interactive**: uses `node-pty` to provide a full‑featured terminal.
+- Processes can be of **two types**:
+  - **Regular** – launched via `child_process.spawn`, with I/O through standard streams.
+  - **Interactive** – uses `node-pty` to provide a full‑featured terminal.
 
 ### Client Interface
-- The Manager (at `/appwrap/manager`) provides methods for process management.
-- The Process object (at `/appwrap/process/<id>`) provides signals for receiving data.
+- The **Manager** (at `/appwrap/manager`) provides methods for process management.
+- The **Process object** (at `/appwrap/process/<id>`) provides signals for receiving data.
+
+---
 
 ## Key Responsibilities
 
@@ -25,10 +28,11 @@
 - **Status Notifications** – Emitting events for process start, termination (with exit code or signal), and errors.
 - **Monitoring** – Maintaining a registry of all active processes and providing the ability to list them.
 
+---
+
 ## AppWrapper D‑Bus Interface
 
 ### Service Identification
-
 - **Service Name:** `dev.flipper.appwrap`
 - **Manager Object Path:** `/appwrap/manager`
 - **Process Object Path:** `/appwrap/process/<id>`
@@ -60,6 +64,8 @@ Each running process exposes a D‑Bus object at `/appwrap/process/<id>` that em
 - Clients (typically the `Model`) interact with the **Manager** to start, stop, and send input to processes.
 - Each started process gets a unique object path, and the client can subscribe to signals on that object to receive output, termination, and error notifications.
 - The `AppWrapper` maintains a registry of all active processes, which can be retrieved via the `List` method.
+
+---
 
 ## Process Lifecycle (from AppWrapper Perspective)
 
@@ -95,6 +101,8 @@ Each running process exposes a D‑Bus object at `/appwrap/process/<id>` that em
 8. **Error Handling**
    - On launch or runtime errors, an `Error` signal is emitted.
 
+---
+
 ### Integration with the Model
 
 - The `Model` calls `Start` with parameters derived from plugin definitions.
@@ -103,4 +111,3 @@ Each running process exposes a D‑Bus object at `/appwrap/process/<id>` that em
 - The `Model` is responsible for storing object paths and managing the overall lifecycle of processes.
 
 ![AppWrapper diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/silart/flipctl/ui_arch/diagrams/app-wrapper.puml)
-
