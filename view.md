@@ -1,17 +1,24 @@
+# View Layer
 
-## View Layer
+The **View** is the user interface layer responsible for rendering the system state and handling user interaction. The architecture supports multiple View implementations (e.g., hardware display, web interface, terminal‑based TUI), all of which follow a unified communication protocol with the `Model` (`modeld`) via **D‑Bus**.
 
-The **View** is the user interface layer responsible for rendering the system state and handling user interaction. The architecture supports multiple View implementations (e.g., hardware display, web interface, terminal‑based TUI), all of which follow a unified communication protocol with the `Model` (`modeld`) via D‑Bus.
+---
 
 ## View Responsibilities
 
-- **State Rendering** – Displaying the current system state received from the `Model`. This includes the active screen, the list of controls (fields, buttons, tables) with their values, the status of running tasks, and navigation hints.
+- **State Rendering** – Displaying the current system state received from the `Model`. This includes:
+  - The active screen
+  - The list of controls (fields, buttons, tables) with their values
+  - The status of running tasks
+  - Navigation hints
 
 - **User Input Forwarding** – Transmitting user interactions (button presses, menu selections, field value changes, task start/stop actions) to the `Model`.
 
 - **Navigation Support** – Showing the current screen and providing mechanisms to switch between screens (main menu, task screens) and navigate back to the previous screen.
 
 - **Real‑time Event Handling** – Subscribing to the `StateChanged` signal and redrawing the interface on every state update, ensuring the UI stays synchronised with the `Model`.
+
+---
 
 ## Interaction with the Model
 
@@ -24,7 +31,9 @@ All View implementations use the same set of D‑Bus methods and signals exposed
   - `SendInput(taskId, data)`
   - `GoBack()`
 
-In this design, the View contains no business logic and has no knowledge of the Model's internal workings. It solely renders data and relays commands to the Model.
+In this design, the View **contains no business logic** and has no knowledge of the Model's internal workings. It solely renders data and relays commands to the Model.
+
+---
 
 ## Abstract View Workflow
 
@@ -42,12 +51,14 @@ In this design, the View contains no business logic and has no knowledge of the 
 ### 3. Handling User Input
 When a user interacts with the UI (click, text input, button press), the View identifies the affected control and invokes the appropriate model method:
 
-- Menu item selection → `SelectScreen`
-- Changing a field value → `SetControlValue`
-- "Start" button → `Execute`
-- "Stop" button → `Stop`
-- Sending a command to an interactive task → `SendInput`
-- Going back → `GoBack`
+| User Action | Model Method |
+|-------------|--------------|
+| Menu item selection | `SelectScreen` |
+| Changing a field value | `SetControlValue` |
+| "Start" button | `Execute` |
+| "Stop" button | `Stop` |
+| Sending a command to an interactive task | `SendInput` |
+| Going back | `GoBack` |
 
 After calling a method, the model updates its state and sends a new `StateChanged` signal, which the View processes to refresh the UI.
 
@@ -56,7 +67,9 @@ After calling a method, the model updates its state and sends a new `StateChange
 - On each new signal, the View redraws the screen.
 - This ensures real‑time synchronisation of the interface.
 
-### Implementation‑Specific Notes
+---
+
+## Implementation‑Specific Notes
 
 While all Views follow the same protocol, each implementation has its own specifics:
 
@@ -64,15 +77,17 @@ While all Views follow the same protocol, each implementation has its own specif
 
 - **Web View** – Implemented as a separate Node.js service using HTTP and WebSockets to serve a web‑based interface.
 
-- **TUI View** – Implemented as a separate Node.js service using terminal UI libraries such as Ink or OpenTUI.
+- **TUI View** – Implemented as a separate Node.js service using terminal UI libraries such as **Ink** or **OpenTUI**.
 
 Despite different technical stacks, all Views adhere to the unified protocol and contain no business logic—they only transform data into UI elements and forward user commands to the Model.
 
 ![View diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/silart/flipctl/ui_arch/diagrams/view.puml)
 
+---
+
 ## HW View Implementation Considerations
 
-The HW View consists of two parts: the microcontroller firmware and the client-side Node.js service.
+The HW View consists of two parts: the microcontroller firmware and the client‑side Node.js service.
 
 Two approaches are possible:
 
@@ -82,10 +97,10 @@ Two approaches are possible:
 
 ### Comparison of Approaches
 
-| Aspect | Approach 1 (Frame-based) | Approach 2 (JSON-based) |
+| Aspect | Approach 1 (Frame‑based) | Approach 2 (JSON‑based) |
 |--------|--------------------------|--------------------------|
 | **Implementation complexity** | Low – rendering is handled on the Node.js side | Higher – requires implementing controls and rendering logic on the microcontroller |
-| **Data bandwidth** | High – raw frame data requires a high-speed interface (SPI) | Low – lightweight JSON can be transmitted over UART |
+| **Data bandwidth** | High – raw frame data requires a high‑speed interface (SPI) | Low – lightweight JSON can be transmitted over UART |
 | **Hardware flexibility** | SPI is consumed for display, limiting user expansion | UART or other low‑bandwidth interfaces remain available for user peripherals |
 | **Current status** | Already implemented | Proposed enhancement |
 
@@ -121,5 +136,3 @@ These libraries are available at:
 ### Summary
 
 The current frame‑based approach provides a quick path to implementation but consumes significant bandwidth and occupies the SPI interface. Moving to a JSON‑based rendering model would reduce communication overhead, free up hardware interfaces, and improve the overall flexibility of the system—though it requires additional firmware development. The choice depends on the balance between development effort and long‑term hardware usability.
-
-
