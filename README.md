@@ -100,3 +100,24 @@ Key changes include:
 - Views (UI services) subscribe to signals and filter incoming messages based on their own `sessionId`.
 
 An exception can be made for **multi‑session views** (e.g., an administrative web dashboard) that are designed to display screens from all connected devices.
+
+### 3. Offloading Rendering to the Microcontroller
+
+Moving the rendering of UI primitives directly into the microcontroller firmware would free up the SPI interface and improve overall system responsiveness by minimising the data flow between the microcontroller and the client-side HW View service.
+
+**Benefits:**
+- **Reduced bandwidth** – Instead of sending full frames, only lightweight JSON state descriptions are transmitted (e.g., over UART).
+- **Liberated hardware interface** – The SPI bus becomes available for user‑connected peripherals.
+- **Lower latency** – The microcontroller renders locally, reducing round‑trip delays.
+
+For this purpose, custom libraries (developed as personal projects) can be utilised:
+
+- **TinyGL** – A lightweight library for rendering basic graphical elements on LCD displays in embedded systems. It supports canvas operations with frame buffer pixels and can work with or without dedicated hardware.
+- **FrameBuffer** – Designed to manage framebuffers for low‑resolution displays (e.g., 128×64) commonly used in embedded systems.
+
+[HW View Implementation Considerations](view.md#HW View Implementation Considerations)
+
+These libraries are available at:
+- https://gitlab.com/silart-pub/embedded/tinygl
+- https://gitlab.com/silart-pub/embedded/framebuffer
+
