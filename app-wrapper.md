@@ -48,6 +48,17 @@ The Manager provides methods for controlling processes.
 | `SendInput(path: object path, data: string)` | Sends data to the `STDIN` of the process (works for both regular and PTY‑based interactive processes). |
 | `List()` | Returns an array of object paths for all currently active processes. |
 
+The `options` dictionary may contain the following fields:
+| Field | Type | Description |
+|-------|------|-------------|
+| `cwd` | string | Working directory |
+| `env` | object | Environment variables (key‑value) |
+| `timeout` | number | Maximum execution time (seconds) |
+| `interactive` | boolean | Use PTY (default: false) |
+| `cols` | number | Terminal columns (for PTY) |
+| `rows` | number | Terminal rows (for PTY) |
+| `stopSignal` | string | Signal to send on stop (default: "SIGTERM") |
+
 ### Process Object Interface (`dev.flipper.AppWrapper.Process`)
 
 Each running process exposes a D‑Bus object at `/appwrap/process/<id>` that emits the following signals:
