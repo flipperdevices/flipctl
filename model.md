@@ -107,6 +107,11 @@ This stack enables seamless forward/backward navigation across the user interfac
 
 > See: [State example](model-state.md)
 
+
+### Multi‑Device Support
+
+The current interface is designed for a single device. For multiple devices, a `sessionId` parameter will be added to all methods and signals (see [Future Architecture Evolution](README.md#Future-Architecture-Evolution) for details).
+
 ---
 
 ## Lifecycle of Interaction
