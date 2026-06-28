@@ -137,4 +137,4 @@ These libraries are available at:
 
 ### Summary
 
-The current frame‑based approach provides a quick path to implementation but consumes significant bandwidth and occupies the SPI interface. Moving to a JSON‑based rendering model would reduce communication overhead, free up hardware interfaces, and improve the overall flexibility of the system—though it requires additional firmware development. The choice depends on the balance between development effort and long‑term hardware usability.
+The current frame-based approach provides a quick path to implementation but consumes significant bandwidth and occupies the SPI interface. Moving to a JSON‑based rendering model would reduce communication overhead, free up hardware interfaces, and improve the overall flexibility of the system-though it requires additional firmware development. The choice depends on the balance between development effort and long‑term hardware usability.
