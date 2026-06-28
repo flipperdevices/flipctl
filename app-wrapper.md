@@ -52,7 +52,6 @@ The `options` dictionary may contain the following fields:
 | Field | Type | Description |
 |-------|------|-------------|
 | `cwd` | string | Working directory |
-| `env` | object | Environment variables (key‑value) |
 | `timeout` | number | Maximum execution time (seconds) |
 | `interactive` | boolean | Use PTY (default: false) |
 | `cols` | number | Terminal columns (for PTY) |
