@@ -8,6 +8,7 @@ State of model example:
     "timestamp": "2026-06-10T12:34:56.789Z"
   },
   "currentScreenId": "ping",
+  "navigationStack": ["menu", "ping"],
   "screen": {
     "id": "ping",
     "title": "Ping Host",
