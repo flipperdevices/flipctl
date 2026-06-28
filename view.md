@@ -33,6 +33,8 @@ All View implementations use the same set of D‑Bus methods and signals exposed
 
 In this design, the View **contains no business logic** and has no knowledge of the Model's internal workings. It solely renders data and relays commands to the Model.
 
+The current protocol assumes a single device. For multi‑device scenarios, all methods and signals will be extended with a `sessionId` parameter (planned) (see [Future Architecture Evolution](README.md#Future-Architecture-Evolution) for details).
+
 ---
 
 ## Abstract View Workflow
@@ -40,7 +42,7 @@ In this design, the View **contains no business logic** and has no knowledge of 
 ### 1. Initialization
 - The View connects to the system D‑Bus bus.
 - It acquires a proxy object for `dev.flipper.model` and subscribes to the `StateChanged` signal.
-- It calls `GetState()` to retrieve the initial full state.
+- It may call `GetState()` (if needed) to retrieve the initial full state; the first `StateChanged` signal already contains the current screen state.
 
 ### 2. Rendering
 - Upon receiving a `StateChanged` signal, the View extracts the current screen.
