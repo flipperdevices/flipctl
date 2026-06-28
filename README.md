@@ -121,3 +121,9 @@ These libraries are available at:
 - https://gitlab.com/silart-pub/embedded/tinygl
 - https://gitlab.com/silart-pub/embedded/framebuffer
 
+## Contacts
+
+My CV:
+- [English](https://www.linkedin.com/in/artem-silivanchik-52204264/)
+- [Russian](https://career.habr.com/silart82)
+
