@@ -1,0 +1,49 @@
+@startuml
+title Interaction of Model with View and AppWrapper
+
+actor "User (View)" as User
+participant "Model (modeld)" as Model
+participant "AppWrapper (app_wrapperd)" as AppWrapper
+participant "Console Utility" as Util
+
+== Initialization ==
+Model -> Model : Loads JSON plugins\n(creates main menu and task screens)
+Model -> User : Sends first StateChanged signal
+
+== Navigation ==
+User -> Model : SelectScreen(screenId)
+Model -> Model : Updates currentScreenId,\nnavigation stack
+Model -> User : StateChanged (new screen)
+
+== Changing parameters ==
+User -> Model : SetParameter(taskId, paramId, value)
+Model -> Model : Updates appParams
+Model -> User : StateChanged (updated controls)
+
+== Running a task ==
+User -> Model : Execute(taskId)
+Model -> Model : Builds arguments,\nsubstitutes params
+Model -> AppWrapper : Start(appId, args, env, options)
+AppWrapper -> AppWrapper : Starts the process
+AppWrapper -> Model : Started(pid)
+Model -> Model : Sets status to "running",\nupdates controls
+Model -> User : StateChanged (screen with "Stop" button)
+
+== Output processing ==
+loop For each line of stdout/stderr
+    AppWrapper -> Model : Output(stream, data)
+    Model -> Model : Applies parsing rules\n(updates controls)
+    Model -> User : StateChanged (updated data)
+end
+
+== Completion / error ==
+AppWrapper -> Model : Exited(code, signal) or Error(message)
+Model -> Model : Updates status,\nfinal controls
+Model -> User : StateChanged (final state)
+
+== Interactive input (optional) ==
+User -> Model : SendInput(taskId, data)
+Model -> AppWrapper : SendInput(path, data)
+AppWrapper -> Util : Writes to STDIN (or PTY)
+
+@enduml

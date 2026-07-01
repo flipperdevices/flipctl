@@ -1,79 +1,129 @@
-# FlipCTL — a UI framework for embedded Linux systems
+# Architecture Overview
 
-FlipCTL is a lightweight UI framework for embedded and headless Linux systems, designed as a modern replacement for traditional HMI solutions. Originally built for Flipper One, it runs on any Linux system — from servers and routers to single-board computers, without requiring a desktop environment.
+The UI system is built upon a **microservice architecture**. It comprises three primary logical layers, each implemented as standalone daemons (services) that communicate via **D‑Bus**.
 
-On one side, FlipCTL interacts with the operating system and wrappers around command line utilities such as `ping` and `nmap`. On the other, it enables users to control the system through various control interfaces, such as a web browser, an SSH terminal, or a physical control panel with an LCD display.
+---
 
-![](files/pics/flipctl-gui-scheme.png)
+## Core Components
 
-> [!NOTE]
-> We are looking for a Software Architect to join the FlipCTL project. Learn more [here](#how-to-contribute).
+1. **[Model](model.md) (`modeld`)**
+   The central orchestration service. Acts as the brain of the system, responsible for managing core business logic, state, and coordinating requests between the view layer and the system layer.
 
-## Architecture
+2. **[View](view.md) (`hw_viewd`, `web_viewd`, `tui_viewd`)**
+   The user interface services. Each daemon handles a specific presentation medium:
+   - `hw_viewd` – Hardware/embedded UI rendering.
+   - `web_viewd` – Web‑based interface rendering.
+   - `tui_viewd` – Terminal‑based (TUI) interface rendering.
 
-![](files/pics/flipctl-architecture.jpg)
+3. **[AppWrapper](app-wrapper.md) (`app_wrapperd`)**
+   The execution service. This daemon is responsible for managing, spawning, and interfacing with underlying console utilities.
 
-Core Components of FlipCTL:
+![System diagram](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/silart/flipctl/ui_arch/diagrams/main.puml)
 
-* **Backend** is responsible for managing the operating system itself. It can interact with systemd, control OS services, configure networking through NetworkManager or systemd-networkd, and wrap existing command-line utilities such as nmap, ping, and traceroute. The backend exposes these capabilities through APIs that are consumed by the frontend.
+---
 
-* **UI Frontend** is currently built using HTML and JavaScript. Despite the associated overhead, this approach enables rapid UI development and compact implementation, while avoiding the need for specialized expertise required by many embedded UI frameworks.
+## Design Pattern
 
-* **Renderer** is a web browser. On Flipper One, we currently use a headless WebKit instance running directly on top of DRM (Direct Rendering Manager), without Xorg or Wayland. We also want to support multiple renderer options, for example, TUI (Text User Interface) for using  directly from the console.
+The system employs the **Model‑View‑Presenter (MVP)** architectural pattern.
+To reduce complexity and avoid unnecessary overhead, the **Model** and **Presenter** roles are combined (merged) within the `modeld` service, streamlining the communication flow between the central logic and the views.
 
-* **App Wrappers** integrate standard Linux command line applications into FlipCTL, providing controls for managing them and displaying their output.
+---
 
-* **Control Interfaces** are the devices and applications used to control FlipCTL:
-    * Flipper One.
-    * FlipCTL Control Panel.
-    * TUI (Text UI) via a local terminal or SSH.
-    * Web browser or desktop application.
+## Communication Bus
 
-## FlipCTL Control Panel
+**D‑Bus** is selected as the inter‑service communication protocol and system bus. The rationale for this choice includes:
 
-FlipCTL Control Panel is a compact device featuring the same display as the Flipper One, along with physical buttons and a couple of LEDs. It provides full control over FlipCTL and can also emulate Power and Reset button presses on the host system using built-in relays.
+- **Linux Standard** – Native, well‑integrated, and widely adopted across embedded and desktop Linux environments.
+- **Loose Coupling** – Services interact via well‑defined interfaces without direct dependencies on each other’s implementations.
+- **Signal‑Based Architecture** – Naturally supports the event‑driven, asynchronous nature of the system, allowing services to broadcast state changes without blocking.
+- **Embedded Suitability** – Lightweight enough to run efficiently on resource‑constrained embedded devices.
 
-![](files/pics/flipctl-control-panel-mount-types.jpg)
+---
 
-### Mounting options
+## Technology Stack
 
-FlipCTL Control Panel can be:
+### Runtime: Node.js
 
-* placed on a desk (using a desktop stand);
-* mounted on a server or PC case;
-* mounted to server rack (using a mounting bracket);
-* mounted directly to an SBC (single-board computer) using screws and standoffs.
+All services are written entirely in **Node.js** and leverage an asynchronous, event‑driven, non‑blocking I/O model.
 
-> [!NOTE]
-> When mounted on an SBC, [brass standoffs](https://thepihut.com/products/brass-m2-5-standoffs-16mm-tall-black-plated-pack-of-2) and a [GPIO riser header](https://thepihut.com/products/gpio-riser-header-for-raspberry-pi) can be used to provide additional clearance for cooling of the SBC's chips.
+**Advantages:**
+- **Asynchronous by Design** – Perfectly aligns with D‑Bus signals and the system's reactive flow.
+- **Rich Ecosystem (npm)** – Accelerates development with battle‑tested libraries for D‑Bus bindings, process management, and logging.
+- **Rapid Development** – Dynamic typing and a low‑boilerplate syntax enable fast prototyping and iteration.
+- **Cross‑Platform** – Facilitates development and testing on workstations before deployment to the target device.
+- **Fast Startup** – Minimal boot overhead is critical for embedded systems that require quick initialization.
 
-### Host connectivity options
+**Disadvantages:**
+- **Lower Performance** – Interpreted execution cannot match the raw speed of compiled languages (e.g., C++, Rust) for CPU‑intensive tasks.
+- **Increased Memory Footprint** – The V8 engine and garbage collection introduce higher RAM consumption compared to native binaries.
 
-FlipCTL Control Panel supports two host interfaces for communication with and power supply from the host system:
-* **USB 2.0** via the USB-C connector on the back of the device. Suitable for connecting to servers, routers, PCs, and virtually any other host system.
-* **SPI** via the 40-pin header on the back of the device. Designed for direct connection to single-board computers (SBCs). 
+### Strategic Outlook
 
-> [!NOTE]
-> The choice of SPI is not final yet. We are discussing it in [this issue](https://github.com/flipperdevices/flipperone-hardware/issues/133).
+Node.js is a **pragmatic choice** for our embedded Linux device. It ensures rapid time‑to‑market, robust process management, and reliable D‑Bus integration—making it an ideal foundation for validating the system architecture and proving the core concept.
 
-![](files/pics/flipctl-back-side.png)
+Looking ahead, the architecture is designed for **evolutionary replacement**. If performance bottlenecks or memory constraints arise in production, we plan to **gradually migrate individual services** to a more performant compiled language (e.g., C++) on a case‑by‑case basis, without disrupting the overall system design or inter‑service communication contracts.
 
-FlipCTL also features a 2.54 mm pitch header (not shown on the image above) for connecting to the host motherboard's front panel connector, usually labeled F_PANEL. This enables local or remote control of the host's power and reset functions through FlipCTL.
+---
 
-## How to contribute
+## Architectural Limitations
 
-This page provides a high level overview of FlipCTL and its architecture. While the core concepts are defined, there are many ways to implement them in practice. We invite the community to propose a concrete architecture for FlipCTL by submitting a Pull Request to this repository. The author of the most compelling architecture proposal may be invited to take on the role of Project Architect and help shape the future of FlipCTL.
+1. **Plugin Implementation via JSON Descriptions**
+   Currently, plugins are defined using JSON schemas. This approach works well for many console utilities that produce plain, simple text output. However, it falls short when dealing with complex, interactive, or rich terminal output—such as that generated by tools like `htop`, `btop`, `gdb`, `lldb`, or any TUI‑based applications.
+   To support such cases, the architecture must be extended with a **scripting facility**. The user would provide a custom script (of a predefined format) that reads the raw output from the utility, processes it, and emits a simplified, structured text representation suitable for forwarding to the View layer.
 
-A Pull Request should include:
+2. **Potential Overhead from Node.js**
+   The use of Node.js introduces inherent performance and memory overhead compared to compiled languages. While acceptable for the current scale, this may become a bottleneck under heavy load or on extremely resource‑constrained hardware. Monitoring and profiling will be essential to determine whether migration to native components is required in the future.
 
-- A description of your proposed FlipCTL architecture implementation, including the components you would use and how they would interact with each other.
+---
 
-- A description of your vision for the plugin system and the wrappers for standard command-line utilities like `ping` or `nmap`.
+## Future Architecture Evolution
 
-- A minimal working FlipCTL prototype capable of driving multiple frontends. One frontend should be a Web UI, while another should be a TUI.
+### 1. Support for Shared Object (`.so`) Plugins
 
-## Links
+To enable direct invocation of native functions, it would be beneficial to allow users to implement their own **shared object libraries** (`.so`) with a predefined set of exported functions. A dedicated service—**`SoWrapper`**—would be introduced to load these user‑provided `.so` files and call their functions on demand.
 
-* [FlipCTL page](https://docs.flipper.net/one/cpu-software/flipctl) on the Flipper One Dev Portal.
-* [Blog post](https://blog.flipper.net/flipctl-our-gui-framework-for-embedded-linux-systems/) about FlipCTL in the Flipper Devices blog.
-* [Fake FLipCTL2](https://github.com/flipperdevices/flipperone-testing/tree/dev/fake-flipctl2) current dirty AI-made prototype of FlipCTL, needs complete rework.
+This requires:
+- Adding a new daemon: `SoWrapper`.
+- Modifying the `Model` service to delegate native calls to `SoWrapper` when a plugin is of `.so` type.
+
+For implementation, existing Node.js packages such as **`ffi-napi`** and **`ref-napi`** can be used to provide the necessary Foreign Function Interface (FFI) bindings, allowing seamless interoperability between Node.js and native compiled code.
+
+### 2. Multi‑Device Support (Multiple FlipCtl Units per Linux Host)
+
+It may be useful to allow **multiple FlipCtl devices** to connect simultaneously to the same Linux machine. To enable this scenario, the system must introduce a unique **`sessionId`** per device.
+
+Key changes include:
+- Each FlipCtl device must generate and carry its own persistent `sessionId`.
+- Upon registration, the device sends its `sessionId` to the `Model`, which then stores it alongside the device’s state.
+- All `Model` methods and signals shall accept `sessionId` as the **first argument**, so every request and notification is explicitly scoped to a particular device.
+- Instead of maintaining a single global state, the `Model` will hold a **dictionary of states**, keyed by `sessionId`.
+- Views (UI services) subscribe to signals and filter incoming messages based on their own `sessionId`.
+
+An exception can be made for **multi‑session views** (e.g., an administrative web dashboard) that are designed to display screens from all connected devices.
+
+### 3. Offloading Rendering to the Microcontroller
+
+Moving the rendering of UI primitives directly into the microcontroller firmware would free up the SPI interface and improve overall system responsiveness by minimising the data flow between the microcontroller and the client-side HW View service.
+
+**Benefits:**
+- **Reduced bandwidth** – Instead of sending full frames, only lightweight JSON state descriptions are transmitted (e.g., over UART).
+- **Liberated hardware interface** – The SPI bus becomes available for user‑connected peripherals.
+- **Lower latency** – The microcontroller renders locally, reducing round‑trip delays.
+
+For this purpose, custom libraries (developed as personal projects) can be utilised:
+
+- **TinyGL** – A lightweight library for rendering basic graphical elements on LCD displays in embedded systems. It supports canvas operations with frame buffer pixels and can work with or without dedicated hardware.
+- **FrameBuffer** – Designed to manage framebuffers for low‑resolution displays (e.g., 128×64) commonly used in embedded systems.
+
+[HW View Implementation Considerations](view.md#hw-view-implementation-considerations)
+
+These libraries are available at:
+- https://gitlab.com/silart-pub/embedded/tinygl
+- https://gitlab.com/silart-pub/embedded/framebuffer
+
+## Contacts
+
+My CV:
+- [English](https://www.linkedin.com/in/artem-silivanchik-52204264/)
+- [Russian](https://career.habr.com/silart82)
+
