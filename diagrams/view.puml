@@ -1,0 +1,30 @@
+@startuml
+title Abstract View Workflow
+
+actor "User" as User
+participant "View (any implementation)" as View
+participant "Model (modeld)" as Model
+
+== Initialization ==
+View -> View : Connects to system D‑Bus
+View -> Model : Subscribes to StateChanged signal
+View -> Model : GetState() (initial full state)
+
+== Rendering loop ==
+loop On each StateChanged
+    Model -> View : StateChanged(screen data)
+    View -> View : Renders controls from screen\n(fields, buttons, tables, etc.)
+    View -> User : Displays UI
+end
+
+== User input handling ==
+User -> View : Interacts (click, text input, button press)
+View -> View : Identifies affected control
+View -> Model : Calls appropriate method:\nSelectScreen, SetControlValue,\nExecute, Stop, SendInput, GoBack
+
+Model -> Model : Updates state
+Model -> View : StateChanged (updated screen)
+View -> View : Re-renders screen
+View -> User : Updates UI
+
+@enduml
