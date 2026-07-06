@@ -16,29 +16,29 @@ FlipCTL should have one explicit behavioral authority for semantic state and tra
 
 Renderers should consume projections of that authority. Capability wrappers should return bounded semantic results before UI state consumes them. Observability can then record accepted events, transitions, capability boundaries, and projection outputs for inspection and regression.
 
-Replay is only an observability and regression aid in this proposal. It is not the architecture premise and does not imply hardware timing, power measurement, deterministic rendering, or complete system simulation.
-
 ## 3. Proposed boundary
 
 ```text
-Input happens
-  ↓
-FlipCTL gives it a clear name
-  ↓
-The core decides what it means
+Semantic core
   ↓
 ViewDocument describes what to show
   ↓
 Web / TUI / panel render it
+  ↓
+User input returns
+  ↓
+FlipCTL gives that input a clear name
+  ↓
+Semantic core decides what changes
 ```
 
 The semantic control core owns accepted events, state transitions, capability requests, capability results, and result handling. ViewDocument-style models describe what a renderer needs to show, not necessarily the full semantic authority for the product.
 
-Under this boundary, renderers may emit user input, but that input is normalized through the input grammar before it affects semantic state.
+Under this boundary, renderers sit in a feedback loop rather than a one-way chain. The core publishes semantic state as a ViewDocument-style projection. Renderers display that projection and return user input. The input grammar normalizes that input before the core decides any semantic transition.
 
 ## 4. Relationship to daemon / ViewDocument / Web / TUI direction
 
-This proposal is meant to fit beside the daemon, ViewDocument, Web, and TUI direction from upstream PR #4.
+This proposal is meant to clarify the boundary between FlipCTL behavior, ViewDocument-style projections, and renderer implementations.
 
 The daemon can remain the runtime process and integration host. The semantic control core can define the behavioral rules inside or alongside that runtime. ViewDocument can remain the renderer-facing contract consumed by Web, TUI, and panel renderers.
 
@@ -49,7 +49,7 @@ Is ViewDocument the full semantic state model,
 or is it the renderer-facing projection of a deeper semantic control core?
 ```
 
-This document proposes treating ViewDocument as a projection unless upstream maintainers prefer it to be the full semantic model.
+This document proposes treating ViewDocument as a projection.
 
 ## 5. Minimal proof path
 
@@ -67,26 +67,25 @@ That path is small enough to exercise the architecture without requiring broad p
 - Web, TUI, and panel renderers can consume the same ViewDocument-style projection.
 - Observability can record the accepted event sequence, state transitions, capability request, capability result, and projection changes for regression checks.
 
-## 6. What feedback is requested
+## 6. Settled proposal positions
 
-- Should FlipCTL make the semantic control core an explicit architecture boundary?
-- Should ViewDocument be treated as the full semantic state model or as a renderer-facing projection?
-- Should capability wrappers return bounded semantic results before UI state consumes them?
-- Is Home → Network → Ping → Result the right minimal proof path?
-- Which part of this boundary conflicts with the current daemon / ViewDocument direction?
+This proposal takes the following positions:
+
+- FlipCTL should make the semantic control core an explicit architecture boundary so behavior is owned in one place and shared across renderers.
+- ViewDocument should describe what renderers need to show, not own the full behavioral state of the product.
+- Capability wrappers should return bounded semantic results before those results enter UI state.
+- `Home → Network → Ping → Result` is the right first proof path because it exercises navigation, capability request, bounded result handling, projection, and observability without broad product scope.
+- The proposal does not conflict with the daemon, ViewDocument, Web, or TUI direction unless ViewDocument is intended to be the complete behavioral authority.
 
 ## 7. Out of scope
 
-This proposal does not add or request:
+This proposal is a discussion package only. It does not add, request, or claim:
 
-- code
+- implementation code
 - prototype files
 - schemas
 - tests
 - CI changes
-- hardware claims
-- battery or power measurement claims
-- upstream PR creation
-- precision-replay-specific framing
-- replacing the daemon direction
-- replacing upstream PR #4
+- hardware behavior
+- battery-life results
+- power measurement results
