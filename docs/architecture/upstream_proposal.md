@@ -21,15 +21,15 @@ Replay is only an observability and regression aid in this proposal. It is not t
 ## 3. Proposed boundary
 
 ```text
-Event sources
+Input happens
   ↓
-Input grammar
+FlipCTL gives it a clear name
   ↓
-Semantic control core
+The core decides what it means
   ↓
-ViewDocument projection
+ViewDocument describes what to show
   ↓
-Renderers: Web / TUI / panel
+Web / TUI / panel render it
 ```
 
 The semantic control core owns accepted events, state transitions, capability requests, capability results, and result handling. ViewDocument-style models describe what a renderer needs to show, not necessarily the full semantic authority for the product.
