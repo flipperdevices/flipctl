@@ -55,7 +55,7 @@ A renderer-facing projection, such as a ViewDocument-style model, can sit betwee
 
 ### Event Sources
 
-Event sources produce raw input or external signals. They may include buttons, keyboard input, pointer input, timers, backend notifications, network status changes, plugin signals, or renderer-originated actions.
+Event sources produce raw input or external signals. They may include buttons, keyboard input, pointer input, timers, backend notifications, network status changes, plugin signals, or renderer-originated input.
 
 Event sources should not directly mutate application state. They should feed the input grammar.
 
