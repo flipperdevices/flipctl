@@ -1,15 +1,18 @@
 name: ping
 description: Send ICMP echo requests to a target host and report reachability and round-trip time.
-version: "1.0"
+version: "1.1"
 inputs:
   - name: target
     type: string
     required: true
+    max_length: 253
     description: IP address or hostname to ping
   - name: count
     type: integer
     required: false
     default: 4
+    minimum: 1
+    maximum: 10
     description: Number of echo requests to send
 command: python main.py
 timeout: 30
