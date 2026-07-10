@@ -1,20 +1,16 @@
-"""
-FlipCTL backend server.
+"""FlipCTL backend server shared by the Web UI and TUI."""
 
-Exposes a REST API consumed by both the Web UI and the TUI:
-  GET  /api/plugins        → list of all loaded plugins with input schemas
-  POST /api/execute        → run a plugin and return its output
-  GET  /                   → serve web/index.html
-  GET  /static/{filename}  → serve additional static assets (future use)
-"""
+from __future__ import annotations
+
 import asyncio
-from functools import partial
+import os
 from pathlib import Path
+from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from core.plugin_manager import PluginError, PluginManager
 
@@ -22,35 +18,49 @@ app = FastAPI(title="FlipCTL", version="0.1.0")
 
 WEB_DIR = Path(__file__).parent / "web"
 plugin_manager = PluginManager()
+MAX_CONCURRENT_EXECUTIONS = int(os.getenv("FLIPCTL_MAX_CONCURRENCY", "4"))
+execution_slots = asyncio.Semaphore(MAX_CONCURRENT_EXECUTIONS)
 
 
 class ExecuteRequest(BaseModel):
-    plugin: str
-    inputs: dict
+    model_config = ConfigDict(extra="forbid")
+
+    plugin: str = Field(min_length=1, max_length=64)
+    inputs: dict[str, Any]
+
+
+@app.exception_handler(PluginError)
+async def plugin_error_handler(_: Request, exc: PluginError) -> JSONResponse:
+    return JSONResponse(
+        status_code=400,
+        content={"error": {"code": exc.code, "message": str(exc)}},
+    )
+
+
+@app.get("/api/health")
+async def health() -> dict[str, str]:
+    return {"status": "ok"}
 
 
 @app.get("/api/plugins")
-async def list_plugins():
-    return JSONResponse(content=plugin_manager.list_plugins())
+async def list_plugins() -> list[dict[str, Any]]:
+    return plugin_manager.list_plugins()
 
 
 @app.post("/api/execute")
-async def execute_plugin(req: ExecuteRequest):
-    try:
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(
-            None, partial(plugin_manager.execute, req.plugin, req.inputs)
-        )
-        return JSONResponse(content=result)
-    except PluginError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+async def execute_plugin(req: ExecuteRequest) -> dict[str, Any]:
+    async with execution_slots:
+        return await asyncio.to_thread(plugin_manager.execute, req.plugin, req.inputs)
 
 
 @app.get("/")
-async def serve_ui():
+async def serve_ui() -> FileResponse | JSONResponse:
     index = WEB_DIR / "index.html"
     if not index.exists():
-        raise HTTPException(status_code=404, detail="Web UI not found")
+        return JSONResponse(
+            status_code=404,
+            content={"error": {"code": "ui_not_found", "message": "Web UI not found"}},
+        )
     return FileResponse(index)
 
 
