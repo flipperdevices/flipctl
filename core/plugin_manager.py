@@ -1,5 +1,4 @@
-"""FlipCTL plugin discovery, validation, and bounded subprocess execution."""
-
+"""Plugin discovery, validation, and bounded subprocess execution."""
 from __future__ import annotations
 
 import copy
@@ -12,7 +11,6 @@ import signal
 import subprocess
 import sys
 import tempfile
-import time
 from pathlib import Path
 from typing import Any
 
