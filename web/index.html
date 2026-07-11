@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlipCTL</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: #0d0d0d;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      width: 100%;
+      max-width: 720px;
+      border-bottom: 1px solid #ff8c00;
+      padding-bottom: 0.75rem;
+      margin-bottom: 2rem;
+    }
+    header h1 { font-size: 1.5rem; color: #ff8c00; letter-spacing: 0.1em; }
+    header p { font-size: 0.75rem; color: #888; margin-top: 0.25rem; }
+
+    main { width: 100%; max-width: 720px; }
+
+    label { display: block; font-size: 0.8rem; color: #aaa; margin-bottom: 0.25rem; }
+
+    select, input[type="text"], input[type="number"] {
+      width: 100%;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #e0e0e0;
+      padding: 0.5rem 0.75rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    select:focus, input:focus { border-color: #ff8c00; }
+
+    .field { margin-bottom: 1rem; }
+
+    button {
+      background: #ff8c00;
+      color: #000;
+      border: none;
+      padding: 0.6rem 1.5rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    button:hover { background: #ffa533; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #output-section { margin-top: 2rem; }
+    #output-section h2 { font-size: 0.85rem; color: #888; margin-bottom: 0.5rem; }
+
+    #output {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 4px;
+      padding: 1rem;
+      font-size: 0.8rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 6rem;
+      color: #c8ffc8;
+    }
+
+    .error { color: #ff6b6b; }
+    .spinner { display: inline-block; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #plugin-desc { font-size: 0.78rem; color: #666; margin-top: 0.25rem; min-height: 1.1em; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>⌨ FlipCTL</h1>
+    <p>Lightweight plugin runner — Web UI</p>
+  </header>
+
+  <main>
+    <div class="field">
+      <label for="plugin-select">Plugin</label>
+      <select id="plugin-select">
+        <option value="">Loading plugins…</option>
+      </select>
+      <div id="plugin-desc"></div>
+    </div>
+
+    <div id="dynamic-inputs"></div>
+
+    <button id="run-btn" disabled>Run</button>
+
+    <div id="output-section">
+      <h2>Output</h2>
+      <pre id="output">Select a plugin and click Run.</pre>
+    </div>
+  </main>
+
+  <script>
+    const API = '';
+    let plugins = [];
+
+    async function loadPlugins() {
+      try {
+        const res = await fetch(`${API}/api/plugins`);
+        plugins = await res.json();
+        const sel = document.getElementById('plugin-select');
+        sel.innerHTML = plugins.length
+          ? plugins.map(p => `<option value="${p.name}">${p.name}</option>`).join('')
+          : '<option value="">No plugins found</option>';
+        if (plugins.length) {
+          renderInputs(plugins[0]);
+          document.getElementById('run-btn').disabled = false;
+        }
+      } catch (e) {
+        document.getElementById('plugin-select').innerHTML = '<option>Error loading plugins</option>';
+        showOutput('Failed to reach backend: ' + e.message, true);
+      }
+    }
+
+    function renderInputs(plugin) {
+      document.getElementById('plugin-desc').textContent = plugin.description || '';
+      const container = document.getElementById('dynamic-inputs');
+      container.innerHTML = '';
+      for (const inp of plugin.inputs || []) {
+        const div = document.createElement('div');
+        div.className = 'field';
+        const label = document.createElement('label');
+        label.htmlFor = `input-${inp.name}`;
+        label.textContent = `${inp.name}${inp.required ? ' *' : ''} — ${inp.description || ''}`;
+        const field = document.createElement('input');
+        field.type = inp.type === 'integer' ? 'number' : 'text';
+        field.id = `input-${inp.name}`;
+        field.dataset.name = inp.name;
+        field.dataset.type = inp.type || 'string';
+        if (inp.default !== undefined) field.value = inp.default;
+        if (inp.required) field.required = true;
+        div.appendChild(label);
+        div.appendChild(field);
+        container.appendChild(div);
+      }
+    }
+
+    function collectInputs(plugin) {
+      const inputs = {};
+      for (const inp of plugin.inputs || []) {
+        const el = document.getElementById(`input-${inp.name}`);
+        if (!el) continue;
+        const val = el.value.trim();
+        inputs[inp.name] = inp.type === 'integer' ? parseInt(val, 10) : val;
+      }
+      return inputs;
+    }
+
+    function showOutput(text, isError = false) {
+      const el = document.getElementById('output');
+      el.textContent = text;
+      el.className = isError ? 'error' : '';
+    }
+
+    document.getElementById('plugin-select').addEventListener('change', function () {
+      const plugin = plugins.find(p => p.name === this.value);
+      if (plugin) renderInputs(plugin);
+    });
+
+    document.getElementById('run-btn').addEventListener('click', async () => {
+      const sel = document.getElementById('plugin-select');
+      const plugin = plugins.find(p => p.name === sel.value);
+      if (!plugin) return;
+
+      const btn = document.getElementById('run-btn');
+      btn.disabled = true;
+      btn.textContent = '⟳ Running…';
+      showOutput('Running…');
+
+      try {
+        const res = await fetch(`${API}/api/execute`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plugin: plugin.name, inputs: collectInputs(plugin) }),
+        });
+        const data = await res.json();
+        showOutput(JSON.stringify(data, null, 2), !res.ok);
+      } catch (e) {
+        showOutput('Request failed: ' + e.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Run';
+      }
+    });
+
+    loadPlugins();
+  </script>
+</body>
+</html>

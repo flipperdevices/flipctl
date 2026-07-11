@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+.venv/
+*.svg.bak
+DemoApp_*.svg
+PR_DESCRIPTION.md
