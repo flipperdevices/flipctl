@@ -1,0 +1,346 @@
+openapi: 3.1.0
+info:
+  title: FlipCTL Backend API
+  version: 0.1.0
+  description: >
+    HTTP/SSE contract between flipctld (backend.md) and the Web/TUI frontends
+    (frontend.md). See backend.md §7 for narrative context and §5 for the
+    plugin IPC protocol referenced by the SSE stream below (ipc-messages.schema.json).
+    Draft/PoC stage (schema version 0.1.0) — breaking changes expected before 1.0.
+servers:
+  - url: http://flipctl.local
+    description: Local device HTTP API. Exact host/port TBD at implementation time.
+
+paths:
+  /api/registry:
+    get:
+      operationId: getRegistry
+      summary: List registered apps/plugins
+      description: Projection of the Plugin Registry (backend.md §8), one entry per discovered manifest.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RegistryEntry"
+
+  /api/plugins/{pluginId}/{action}:
+    post:
+      operationId: invokePluginAction
+      summary: Invoke a manifest-declared action (start/stop/send_event)
+      description: >
+        Looks up `action` in the plugin's manifest actions[] and executes its
+        on_press (phase=down) or on_release (phase=up) effect (backend.md §4.4).
+      parameters:
+        - $ref: "#/components/parameters/PluginId"
+        - name: action
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActionInvocation"
+      responses:
+        "200":
+          description: >
+            Action accepted. `job_id` is present when the resolved effect was
+            start_job; empty object for stop_job/send_event.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: >
+            effect=send_event targeted a plugin with no Running job
+            (backend.md §12 — "send_event targeting a missing job").
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          $ref: "#/components/responses/UnexpectedError"
+
+  /api/plugins/{pluginId}/status:
+    get:
+      operationId: getPluginStatus
+      summary: Cheap synchronous read of latest cached state
+      description: >
+        For simple always-on system/daemon plugins (Wi-Fi, Power). Does not
+        create a Job (backend.md §7).
+      parameters:
+        - $ref: "#/components/parameters/PluginId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginStatus"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/jobs:
+    get:
+      operationId: listJobs
+      summary: List active jobs across all connected clients
+      description: Backend-level analogue of the App Switcher (backend.md §6).
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+
+  /api/jobs/{jobId}:
+    get:
+      operationId: getJob
+      summary: Snapshot of a job's current state
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/jobs/{jobId}/events:
+    get:
+      operationId: streamJobEvents
+      summary: SSE stream of structured job events
+      description: >
+        `Content-Type: text/event-stream`. Each `data:` line is one JSON
+        object matching ipc-messages.schema.json#/$defs/pluginToCore
+        (output/log/done/error), re-broadcast verbatim from the plugin
+        process via the Event Bus (backend.md §5, §6). SSE payloads are not
+        representable as a typed response body in OpenAPI 3.1 — this entry
+        exists for discoverability; ipc-messages.schema.json is authoritative
+        for the payload shape. Any number of clients may subscribe to the
+        same job_id concurrently (multi-client requirement, backend.md §2.3).
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: text/event-stream of job events
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  parameters:
+    PluginId:
+      name: pluginId
+      in: path
+      required: true
+      schema:
+        type: string
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    NotFound:
+      description: Plugin or job not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    UnexpectedError:
+      description: Unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: Stable machine-readable identifier, e.g. "job_not_running", "plugin_not_found".
+            message:
+              type: string
+
+    ActionInvocation:
+      type: object
+      required: [phase]
+      properties:
+        phase:
+          type: string
+          enum: [down, up]
+          description: Selects on_press (down) or on_release (up) from the manifest action (backend.md §4.4).
+
+    ActionResult:
+      type: object
+      properties:
+        job_id:
+          type: string
+          description: Present only when the resolved effect was start_job.
+
+    IconRef:
+      type: string
+      description: Semantic icon id, resolved per-renderer (frontend.md §7). Sourced from the plugin manifest's `icon` field.
+
+    RegistryEntry:
+      oneOf:
+        - $ref: "#/components/schemas/CustomRegistryEntry"
+        - $ref: "#/components/schemas/GenericRegistryEntry"
+      discriminator:
+        propertyName: kind
+        mapping:
+          custom: "#/components/schemas/CustomRegistryEntry"
+          generic: "#/components/schemas/GenericRegistryEntry"
+
+    CustomRegistryEntry:
+      type: object
+      required: [id, title, icon, category, kind]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        icon:
+          $ref: "#/components/schemas/IconRef"
+        category:
+          type: string
+        kind:
+          const: custom
+
+    GenericRegistryEntry:
+      type: object
+      required: [id, title, icon, category, kind, actions]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        icon:
+          $ref: "#/components/schemas/IconRef"
+        category:
+          type: string
+        kind:
+          const: generic
+        inputs:
+          type: array
+          items:
+            $ref: "#/components/schemas/RegistryInputField"
+        status_fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/RegistryStatusField"
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/RegistryAction"
+
+    RegistryInputField:
+      type: object
+      required: [id, label, type]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        type:
+          type: string
+          enum: [text, number, select]
+        required:
+          type: boolean
+          default: false
+        default: {}
+        options:
+          type: array
+          items:
+            type: string
+          description: Present when type=select.
+
+    RegistryStatusField:
+      type: object
+      required: [label, source, type]
+      properties:
+        label:
+          type: string
+        source:
+          type: string
+          description: Corresponds to an `outputs[].id` in the plugin manifest.
+        type:
+          type: string
+          enum: [text, number, list]
+
+    RegistryAction:
+      type: object
+      required: [id, label, endpoint]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        endpoint:
+          type: string
+          description: Path to POST, e.g. /api/plugins/ping/run.
+        bind:
+          type: string
+          pattern: "^(slot:[0-4]|input:[a-z][a-z0-9_]*)$"
+
+    PluginStatus:
+      type: object
+      description: Shape mirrors the plugin's declared outputs[] (manifest.schema.json) — one key per output id.
+      additionalProperties: true
+
+    JobStatus:
+      type: string
+      enum: [pending, running, completed, failed, stopped]
+      description: Mirrors the state diagram in backend.md §6.
+
+    Job:
+      type: object
+      required: [id, plugin_id, status, started_at]
+      properties:
+        id:
+          type: string
+        plugin_id:
+          type: string
+        status:
+          $ref: "#/components/schemas/JobStatus"
+        started_at:
+          type: string
+          format: date-time
+        inputs:
+          type: object
+          additionalProperties: true
+          description: The resolved inputs the job was started with.
+        outputs:
+          type: object
+          additionalProperties: true
+          description: Latest known values, keyed by output id (accumulated from `output` IPC messages).
+        exit_code:
+          type: integer
+        error_message:
+          type: string

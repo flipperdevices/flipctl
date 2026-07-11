@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flipctl.dev/schemas/manifest.schema.json",
+  "title": "FlipCTL Plugin Manifest",
+  "description": "Schema for plugin manifest.toml, validated against its parsed TOML->JSON representation (a TOML table maps 1:1 onto a JSON object). See backend.md §4.1-§4.4. Draft/PoC stage — breaking changes expected before 1.0.",
+  "type": "object",
+  "required": ["id", "title", "version", "tier", "execution", "ui_kind", "entrypoint"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+      "description": "Unique plugin identifier. Used verbatim in URL paths: /api/plugins/{id}/{action}, /api/plugins/{id}/status."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable name shown in menus (frontend.md §4.2)."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$",
+      "description": "Semver of the plugin itself, independent of the manifest schema version."
+    },
+    "icon": {
+      "type": "string",
+      "description": "Semantic icon id. Web resolves it to a bit-packed sprite, TUI to a text glyph (frontend.md §7)."
+    },
+    "category": {
+      "type": "string",
+      "description": "Free-form grouping key for menus, e.g. 'network', 'diagnostics', 'system'."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["system", "community"],
+      "description": "Trust/ownership metadata (backend.md §2.4, §4.2). Does NOT affect execution today — see backend.md §12 privilege risk."
+    },
+    "execution": {
+      "type": "string",
+      "enum": ["one-shot", "stream", "daemon"],
+      "description": "Job lifecycle model (backend.md §4.3)."
+    },
+    "ui_kind": {
+      "type": "string",
+      "enum": ["custom", "generic"],
+      "description": "Whether the frontend renders a hand-written screen (custom) or the shared GenericActionScreen/generic_action.rs (generic). Projected verbatim as `kind` in GET /api/registry (frontend.md §4.2)."
+    },
+    "entrypoint": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Path to the executable, relative to the plugin directory (backend.md §8)."
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "declared": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Declared but NOT enforced yet (backend.md §12). Free-form capability strings, e.g. 'network.raw_socket'."
+        }
+      }
+    },
+    "inputs": {
+      "type": "array",
+      "description": "Parameters the user configures before/while running the plugin (backend.md §4.1).",
+      "items": { "$ref": "#/$defs/inputField" }
+    },
+    "actions": {
+      "type": "array",
+      "description": "Soft-button bindings (backend.md §4.4). May be empty for daemon-only plugins with no user-triggerable actions.",
+      "items": { "$ref": "#/$defs/action" }
+    },
+    "outputs": {
+      "type": "array",
+      "description": "Structured fields the plugin process may emit via `output` IPC messages (see ipc-messages.schema.json).",
+      "items": { "$ref": "#/$defs/outputField" }
+    }
+  },
+  "$defs": {
+    "inputField": {
+      "type": "object",
+      "required": ["id", "label", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "type": { "type": "string", "enum": ["text", "number", "select"] },
+        "required": { "type": "boolean", "default": false },
+        "default": {
+          "description": "Type must match `type`: string for text/select, number for number."
+        },
+        "options": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Required when type=select. Static list for PoC; dynamic options (fetched from another endpoint) are a documented future extension (backend.md §4.1), not yet specified."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "select" } }, "required": ["type"] },
+          "then": { "required": ["options"] }
+        }
+      ]
+    },
+    "outputField": {
+      "type": "object",
+      "required": ["id", "label", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "description": "Matches the `fields` key a plugin uses in `output` IPC messages." },
+        "label": { "type": "string" },
+        "type": { "type": "string", "enum": ["text", "number", "list"] }
+      }
+    },
+    "bind": {
+      "type": "string",
+      "pattern": "^(slot:[0-4]|input:[a-z][a-z0-9_]*)$",
+      "description": "slot:0..4 = position in the 5-slot soft-button bar (fake-flipctl2 button bar). input:<name> = a universal InputAction from the frontend.md §4.1 protocol (e.g. input:ptt). If omitted on an action, the frontend auto-assigns the next free slot in declaration order (backend.md §4.4)."
+    },
+    "effect": {
+      "type": "object",
+      "required": ["effect"],
+      "additionalProperties": false,
+      "properties": {
+        "effect": {
+          "type": "string",
+          "enum": ["start_job", "stop_job", "send_event"]
+        },
+        "name": {
+          "type": "string",
+          "description": "Required when effect=send_event. Delivered to the running job's stdin as {\"type\":\"event\",\"name\":<name>} (backend.md §5)."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "effect": { "const": "send_event" } }, "required": ["effect"] },
+          "then": { "required": ["name"] }
+        }
+      ]
+    },
+    "action": {
+      "type": "object",
+      "required": ["id", "label", "on_press"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "bind": { "$ref": "#/$defs/bind" },
+        "on_press": { "$ref": "#/$defs/effect" },
+        "on_release": {
+          "$ref": "#/$defs/effect",
+          "description": "Optional. If absent, releasing the button/key is a no-op (ordinary tap semantics)."
+        }
+      }
+    }
+  }
+}

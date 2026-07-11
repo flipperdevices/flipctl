@@ -1,79 +1,94 @@
-# FlipCTL — a UI framework for embedded Linux systems
+# FlipCTL — Architecture (condensed version)
 
-FlipCTL is a lightweight UI framework for embedded and headless Linux systems, designed as a modern replacement for traditional HMI solutions. Originally built for Flipper One, it runs on any Linux system — from servers and routers to single-board computers, without requiring a desktop environment.
+> Full versions: [`frontend.md`](./frontend.md), [`backend.md`](./backend.md). This file is a condensed summary for onboarding.
 
-On one side, FlipCTL interacts with the operating system and wrappers around command line utilities such as `ping` and `nmap`. On the other, it enables users to control the system through various control interfaces, such as a web browser, an SSH terminal, or a physical control panel with an LCD display.
+**Goal:** convenient access to Linux tools (networking, systemd, processes) through a pixel-perfect interface on a small screen with a limited set of physical buttons.
 
-![](files/pics/flipctl-gui-scheme.png)
+## Overall architecture
+[![FlipCTL arch preview](/assets/260711-FlipCTL-arch-preview.png)](/260711-FlipCTL-arch.pdf)
 
-> [!NOTE]
-> We are looking for a Software Architect to join the FlipCTL project. Learn more [here](#how-to-contribute).
+> [PDF version](/260711-FlipCTL-arch.pdf)
 
-## Architecture
+Key ideas:
+- **A shared contract instead of shared code.** Frontend (Web and TUI) and backend are three independent stacks, each idiomatic to its own platform, connected by an API/schemas (`contract/`) rather than a shared runtime.
+- **A system of user and system plugins in a thin Go wrapper.** Plugins can be written in any suitable language, or built on existing Linux mechanisms like D-Bus or libraries (libcurl).
+- **The GUI is built on web technologies.** Easy to develop, cheap to maintain.
+- **Web and TUI share a common backend API, but don't share UI logic or assets between themselves.** Each has its own rendering engine.
+- **Rendering to the device screen is done from a headless browser via Linux DRM.** No fuss with drivers, a small memory footprint. A full-fledged web interface as a bonus.
 
-![](files/pics/flipctl-architecture.jpg)
+## Frontend
 
-Core Components of FlipCTL:
+- **Web** — React + `react-dom`, rendering into a single `<canvas>` (`PixelSurface`/`CanvasSurface`) to preserve the prototype's pixel-perfect 1-bit style. We don't use Yoga to try to unify the UI with the TUI — instead we use fixed pixel constants, as in `fake-FlipCTL`.
+- **TUI** — Go + `bubbletea`/`lipgloss`/`bubbles`. Same language as the backend — real synergy on shared types (`contract/go/apitypes`). Not pixel-perfect, a regular text UI. A compiled binary, saving resources on the portable SBC. SSH — via a forced-command on the system `sshd` (or `wish` from the same `bubbletea` stack).
+- Shared between Web and TUI:
+  - input semantics (`InputAction`: Up/Down/Ok/Back/SoftKey1/...);
+  - the navigation model (a screen stack + a separate overlay stack);
+  - the app registry — comes from the backend's registry manager, not stored in the frontend.
+- Example of **a single element** of the array returned by `GET /api/registry` — this is how the backend describes one specific plugin (`ping`) to the frontend; the full registry is an array of such objects, one per installed plugin:
+  ```jsonc
+  { "id": "ping", "kind": "generic",
+    "inputs": [{ "id": "target", "type": "text" }],
+    "actions": [{ "id": "run", "endpoint": "/api/plugins/ping/run", "bind": "slot:2" }] }
+  ```
+  - `id` — the plugin's unique identifier; all other paths are built from it (`/api/plugins/ping/...`).
+  - `kind: "generic"` — the frontend doesn't need to look for a hand-written screen; the plugin is drawn by the shared `GenericActionScreen.tsx`/`generic_action.go` component. For comparison: `kind: "custom"` → a hand-written screen (Wi-Fi, Ethernet, Power) with its own logic.
+  - `inputs` — fields the user fills in before launch. Here there's one text field, `target` — a text input will appear on screen; whatever's typed there is passed to the plugin under the same `target` key (see the IPC example below — it's the same `ping`, just at the next step).
+  - `actions` — the screen's soft buttons.
 
-* **Backend** is responsible for managing the operating system itself. It can interact with systemd, control OS services, configure networking through NetworkManager or systemd-networkd, and wrap existing command-line utilities such as nmap, ping, and traceroute. The backend exposes these capabilities through APIs that are consumed by the frontend.
+## Backend
 
-* **UI Frontend** is currently built using HTML and JavaScript. Despite the associated overhead, this approach enables rapid UI development and compact implementation, while avoiding the need for specialized expertise required by many embedded UI frameworks.
+- **`flipctld` (Go)** — a thin supervisor. Not a store of business logic. Replaces `server.js` from `fake-FlipCTL`. It implements the API, while a separate `Caddy` handles the Web build's static files and external requests, sitting in front of it (reverse proxy `/api/*`), not `flipctld` itself.
+- **Plugins** — separate OS processes. Any language can be used (the only requirement is being able to read/write JSON). They're wired in through a small Go wrapper. Packaged together with a manifest, binaries, icons, and a declarative UI description. They can be split and classified along several axes.
 
-* **Renderer** is a web browser. On Flipper One, we currently use a headless WebKit instance running directly on top of DRM (Direct Rendering Manager), without Xorg or Wayland. We also want to support multiple renderer options, for example, TUI (Text User Interface) for using  directly from the console.
+  - By access level (`tier`):
+    - `system` (Wi-Fi, power, cron, ...) — a mandatory baseline. Written and vetted by the Flipper team.
+    - `community` (ping, nmap, curl, ...) — user-contributed.
+  - By execution type (`execution`):
+    - `one-shot` — starts, does its work, exits. `whoami`.
+    - `stream` — stays alive, sends data and events. `ping`
+    - `daemon` — lives independently of clients, mostly idle, waiting for something. E.g. a notification system.
+  - By UI type (`ui_type`):
+    - `custom` — its own unique UI, backed by real assets in `frontend/UI`.
+    - `generic` — uses primitives from the default UI kit: list, grid, MenuBar, softKeys, dropDown, ...
 
-* **App Wrappers** integrate standard Linux command line applications into FlipCTL, providing controls for managing them and displaying their output.
+- **IPC** — a separate protocol between `flipctld` and a specific running plugin process; kicked off right after the user presses the button from the example above. NDJSON = one JSON object per line — the simplest possible format, needs no library in any language:
+  ```json
+  {"type":"start","inputs":{"target":"8.8.8.8"}}
+  {"type":"output","fields":{"status":"reachable","rtt_ms":13.2}}
+  {"type":"done","exit_code":0}
+  ```
+  - Line 2 — the plugin writes to its own **stdout**: it called the system `ping`, parsed its output itself, and handed back an already-structured result (`status`, `rtt_ms` — fields declared in the plugin's manifest as `outputs`). `flipctld` picks up this line and broadcasts it to every client subscribed to this job over SSE — including clients that didn't start the job themselves.
 
-* **Control Interfaces** are the devices and applications used to control FlipCTL:
-    * Flipper One.
-    * FlipCTL Control Panel.
-    * TUI (Text UI) via a local terminal or SSH.
-    * Web browser or desktop application.
+- **Job / Session / Event Bus** — a job is shared across all clients from the start: anyone can subscribe to an already-running job over SSE (Web and TUI see the same live stream at the same time). There are more states than just "running/not running" — it matters exactly at which stage something went wrong:
 
-## FlipCTL Control Panel
+  ```mermaid
+  stateDiagram-v2
+      [*] --> Pending: POST /api/plugins/{id}/{action}
+      Pending --> Running: process spawned, got "ready"
+      Pending --> Failed: failed to start the process
+      Running --> Completed: "done", exit_code=0
+      Running --> Failed: "error" or exit_code != 0
+      Running --> Stopped: stop_job (SIGTERM)
+      Completed --> [*]
+      Failed --> [*]
+      Stopped --> [*]
+  ```
 
-FlipCTL Control Panel is a compact device featuring the same display as the Flipper One, along with physical buttons and a couple of LEDs. It provides full control over FlipCTL and can also emulate Power and Reset button presses on the host system using built-in relays.
+- **Button input in plugins**: an action in the manifest has a `bind` (`slot:0..4` — a position on the screen's button panel, or `input:back` — a universal action) and separate `on_press`/`on_release` handlers with an effect of `start_job | stop_job | send_event`. `send_event` sends a named event to the stdin of an already-running process instead of spawning a new one.
+- **System plugins can (and should) use D-Bus** (talking to NetworkManager/systemd directly) instead of just parsing CLI output with regex.
+- **Privileges (deferred for now)**: all plugins are currently equally trusted. A future candidate is D-Bus policy + **polkit**, the same stack NetworkManager itself uses; it only works if each plugin has its own D-Bus identity (the plugin holds its own client, rather than `flipctld` acting on its behalf).
 
-![](files/pics/flipctl-control-panel-mount-types.jpg)
+## Contract
+- `contract/openapi.yaml` — the HTTP/SSE API (`/api/registry`, `/api/plugins/{id}/{action}`, `/api/jobs/*`).
+- `contract/manifest.schema.json` — the JSON Schema for a plugin manifest.
+- `contract/ipc-messages.schema.json` — the schema for NDJSON messages between `flipctld` and a plugin.
+- Formalized so the risk of manual type drift is closed by codegen: the backend and TUI (both in Go) use one generated `contract/go/apitypes` package directly; Web (TypeScript) separately generates TS types from the same schema.
 
-### Mounting options
-
-FlipCTL Control Panel can be:
-
-* placed on a desk (using a desktop stand);
-* mounted on a server or PC case;
-* mounted to server rack (using a mounting bracket);
-* mounted directly to an SBC (single-board computer) using screws and standoffs.
-
-> [!NOTE]
-> When mounted on an SBC, [brass standoffs](https://thepihut.com/products/brass-m2-5-standoffs-16mm-tall-black-plated-pack-of-2) and a [GPIO riser header](https://thepihut.com/products/gpio-riser-header-for-raspberry-pi) can be used to provide additional clearance for cooling of the SBC's chips.
-
-### Host connectivity options
-
-FlipCTL Control Panel supports two host interfaces for communication with and power supply from the host system:
-* **USB 2.0** via the USB-C connector on the back of the device. Suitable for connecting to servers, routers, PCs, and virtually any other host system.
-* **SPI** via the 40-pin header on the back of the device. Designed for direct connection to single-board computers (SBCs). 
-
-> [!NOTE]
-> The choice of SPI is not final yet. We are discussing it in [this issue](https://github.com/flipperdevices/flipperone-hardware/issues/133).
-
-![](files/pics/flipctl-back-side.png)
-
-FlipCTL also features a 2.54 mm pitch header (not shown on the image above) for connecting to the host motherboard's front panel connector, usually labeled F_PANEL. This enables local or remote control of the host's power and reset functions through FlipCTL.
-
-## How to contribute
-
-This page provides a high level overview of FlipCTL and its architecture. While the core concepts are defined, there are many ways to implement them in practice. We invite the community to propose a concrete architecture for FlipCTL by submitting a Pull Request to this repository. The author of the most compelling architecture proposal may be invited to take on the role of Project Architect and help shape the future of FlipCTL.
-
-A Pull Request should include:
-
-- A description of your proposed FlipCTL architecture implementation, including the components you would use and how they would interact with each other.
-
-- A description of your vision for the plugin system and the wrappers for standard command-line utilities like `ping` or `nmap`.
-
-- A minimal working FlipCTL prototype capable of driving multiple frontends. One frontend should be a Web UI, while another should be a TUI.
-
-## Links
-
-* [FlipCTL page](https://docs.flipper.net/one/cpu-software/flipctl) on the Flipper One Dev Portal.
-* [Blog post](https://blog.flipper.net/flipctl-our-gui-framework-for-embedded-linux-systems/) about FlipCTL in the Flipper Devices blog.
-* [Fake FLipCTL2](https://github.com/flipperdevices/flipperone-testing/tree/dev/fake-flipctl2) current dirty AI-made prototype of FlipCTL, needs complete rework.
+## Notes
+- There was an option to draw the TUI first and generate the web UI from it — dropped because you can't get a pixel-perfect screen that way (in a TUI we're working with a tall terminal cell, not a square pixel), and it also drags in Node.js and WASM.
+- I'd sketch out the **critical path** and build a quick prototype to test this architecture's assumptions. **It wouldn't have a TUI branch of the architecture diagram at all**.
+- **COG/WPE needs to be replaced**, improved, or at least researched more deeply — right now there are real problems getting it running in pure DRM mode on actual hardware.
+- **Backend** = Golang partly for the synergy (TUI frontend is `bubbletea`) — the backend and TUI use a shared generated type package directly. Bubbletea and its whole ecosystem is an old, well-proven project.
+- **Plugin sandboxing** — deferred.
+- **Plugin permissions system** — deferred.
+- **Caddy** as a separate process was chosen deliberately for a low barrier to entry and an independent release cycle for the Web frontend — the cost: a second resident process on the SBC.

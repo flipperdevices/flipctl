@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flipctl.dev/schemas/ipc-messages.schema.json",
+  "title": "FlipCTL Plugin IPC Messages",
+  "description": "NDJSON-over-stdio protocol between flipctld and a plugin process. Each line of stdin/stdout is exactly one JSON object matching one of the shapes below. See backend.md §5. The same plugin-to-core shapes (output/log/done/error) are also what is re-broadcast, unwrapped, as SSE `data:` payloads on GET /api/jobs/{jobId}/events (openapi.yaml, backend.md §7).",
+  "$defs": {
+    "coreToPlugin": {
+      "description": "Written to the plugin's stdin. `start` is sent once at spawn. For execution=stream|daemon, stdin stays open for the process lifetime and further `event` messages may arrive at any time (backend.md §4.4, §5).",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "inputs"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "start" },
+            "inputs": {
+              "type": "object",
+              "description": "Map of input id -> resolved value, keyed per the plugin's manifest inputs[].",
+              "additionalProperties": true
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "name"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "event" },
+            "name": { "type": "string", "description": "Matches an action's on_press/on_release effect.name in the manifest." }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "additionalProperties": false,
+          "properties": { "type": { "const": "stop" } },
+          "description": "Optional graceful-stop hint (backend.md §5). The core does not wait indefinitely for a response: SIGTERM (then SIGKILL after a timeout) is sent regardless, so this is purely an opportunity for cleanup, not a required handshake."
+        }
+      ]
+    },
+    "pluginToCore": {
+      "description": "Written to the plugin's stdout, one JSON object per line.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type"],
+          "additionalProperties": false,
+          "properties": { "type": { "const": "ready" } },
+          "description": "Signals a successful spawn; Job transitions Pending -> Running (backend.md §6)."
+        },
+        {
+          "type": "object",
+          "required": ["type", "fields"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "output" },
+            "fields": {
+              "type": "object",
+              "description": "Map of output id -> value. Keys must match the plugin's manifest outputs[].id; value type must match the declared output type (text: string, number: number, list: array of strings).",
+              "additionalProperties": true
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "line"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "log" },
+            "line": { "type": "string", "description": "Raw text for history/debugging. Not required to map onto any declared output." }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "exit_code"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "done" },
+            "exit_code": { "type": "integer" }
+          },
+          "description": "Terminal message for one-shot/stream jobs. Job transitions Running -> Completed (exit_code=0) or Failed (exit_code!=0)."
+        },
+        {
+          "type": "object",
+          "required": ["type", "message"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "error" },
+            "message": { "type": "string" }
+          },
+          "description": "Terminal message. Job transitions Running -> Failed."
+        }
+      ]
+    }
+  }
+}
