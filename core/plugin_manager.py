@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import logging
 import os
@@ -10,11 +11,11 @@ import shlex
 import signal
 import subprocess
 import sys
-import threading
+import tempfile
+import time
 from pathlib import Path
-from typing import Any, BinaryIO
+from typing import Any
 
 import yaml
 
-PLUGINS_DIR = Path(__file__).parent.parent / "plugins"
-SUPPORTED_INPUT_TYPES = {"string", "
+PLUGINS_DIR = Path(__file__).parent.parent /
